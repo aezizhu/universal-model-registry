@@ -1,0 +1,9 @@
+[project]
+name = "universal-model-registry"
+version = "0.1.0"
+description = "MCP server exposing a curated registry of current AI models"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.14.5",
+]
