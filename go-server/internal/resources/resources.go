@@ -41,8 +41,11 @@ func PricingSummary() string {
 			current = append(current, m)
 		}
 	}
-	sort.Slice(current, func(i, j int) bool {
-		return current[i].PricingInput < current[j].PricingInput
+	sort.SliceStable(current, func(i, j int) bool {
+		if current[i].PricingInput != current[j].PricingInput {
+			return current[i].PricingInput < current[j].PricingInput
+		}
+		return current[i].ID < current[j].ID
 	})
 
 	rows := []string{

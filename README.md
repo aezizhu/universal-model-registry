@@ -181,7 +181,7 @@ Your AI agent gets these 6 tools:
 | **Google** (5) | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
 | **xAI** (4) | Grok 4, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
 | **Meta** (2) | Llama 4 Maverick, Llama 4 Scout | `llama-4-maverick`, `llama-4-scout` |
-| **Mistral** (3) | Mistral Large 3, Mistral Small 3.2, Devstral 2 | `mistral-large-3-25-12`, `mistral-small-2506`, `devstral-2512` |
+| **Mistral** (3) | Mistral Large 3, Mistral Small 3.2, Devstral 2 | `mistral-large-2512`, `mistral-small-2506`, `devstral-2512` |
 | **DeepSeek** (2) | DeepSeek Reasoner, DeepSeek Chat | `deepseek-reasoner`, `deepseek-chat` |
 
 ### Legacy & Deprecated Models (14)
@@ -189,9 +189,9 @@ Your AI agent gets these 6 tools:
 Also tracked so your agent can detect outdated model IDs and suggest replacements:
 
 - OpenAI: `gpt-4.1` (legacy), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
-- Anthropic: `claude-opus-4-5`, `claude-opus-4-1`, `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
+- Anthropic: `claude-opus-4-5` (legacy), `claude-opus-4-1` (legacy), `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
 - Google: `gemini-2.0-flash` (deprecated)
-- xAI: `grok-3`, `grok-3-mini` (legacy)
+- xAI: `grok-3` (legacy), `grok-3-mini` (legacy)
 - Meta: `llama-3.3-70b` (legacy)
 - Mistral: `codestral-2508` (legacy)
 - DeepSeek: `deepseek-v3` (deprecated)
@@ -236,7 +236,7 @@ Model data is automatically checked every Monday via a GitHub Actions workflow. 
 - **MCP SDK**: `github.com/modelcontextprotocol/go-sdk` v1.3.0 (official)
 - **Transports**: stdio, SSE, Streamable HTTP
 - **Binary size**: ~10MB
-- **Tests**: 38 unit tests
+- **Tests**: 83 unit tests
 - **Deploy**: Docker (alpine), Railway
 
 ## Contributing

@@ -267,3 +267,324 @@ func TestSearchModels_PartialID(t *testing.T) {
 		t.Error("expected 'GPT-5' when searching by partial ID")
 	}
 }
+
+// ── Helper function tests ────────────────────────────────────────────────
+
+func TestFormatInt(t *testing.T) {
+	tests := []struct {
+		input int
+		want  string
+	}{
+		{0, "0"},
+		{999, "999"},
+		{1000, "1,000"},
+		{128000, "128,000"},
+		{1048576, "1,048,576"},
+		{10000000, "10,000,000"},
+	}
+	for _, tc := range tests {
+		got := formatInt(tc.input)
+		if got != tc.want {
+			t.Errorf("formatInt(%d) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestFormatInt_Negative(t *testing.T) {
+	got := formatInt(-1000)
+	if got != "-1,000" {
+		t.Errorf("formatInt(-1000) = %q, want %q", got, "-1,000")
+	}
+}
+
+func TestFormatTable_Empty(t *testing.T) {
+	result := FormatTable(nil)
+	if !strings.Contains(result, "No models found") {
+		t.Errorf("expected 'No models found' for empty slice, got: %s", result)
+	}
+}
+
+func TestFormatTable_SingleModel(t *testing.T) {
+	ms := []models.Model{{
+		ID:          "test-model",
+		DisplayName: "Test Model",
+		Provider:    "TestProvider",
+		Status:      "current",
+	}}
+	result := FormatTable(ms)
+	if !strings.Contains(result, "| test-model |") {
+		t.Error("expected model ID in table")
+	}
+	if !strings.Contains(result, "Model ID") {
+		t.Error("expected table header")
+	}
+}
+
+func TestModelDetail_WithAllCapabilities(t *testing.T) {
+	m := models.Model{
+		ID:              "test-model",
+		DisplayName:     "Test Model",
+		Provider:        "TestProvider",
+		ContextWindow:   200000,
+		MaxOutputTokens: 4096,
+		Vision:          true,
+		Reasoning:       true,
+		PricingInput:    1.0,
+		PricingOutput:   5.0,
+		KnowledgeCutoff: "2025-01",
+		ReleaseDate:     "2025-01",
+		Status:          "current",
+		Notes:           "Test note",
+	}
+	result := ModelDetail(m)
+	if !strings.Contains(result, "Vision") {
+		t.Error("expected 'Vision' in detail")
+	}
+	if !strings.Contains(result, "Reasoning/Thinking") {
+		t.Error("expected 'Reasoning/Thinking' in detail")
+	}
+	if !strings.Contains(result, "Test note") {
+		t.Error("expected notes in detail")
+	}
+}
+
+func TestModelDetail_NoCapabilities(t *testing.T) {
+	m := models.Model{
+		ID:          "test-model",
+		DisplayName: "Test Model",
+		Provider:    "TestProvider",
+		Vision:      false,
+		Reasoning:   false,
+	}
+	result := ModelDetail(m)
+	if !strings.Contains(result, "None") {
+		t.Error("expected 'None' for capabilities when neither vision nor reasoning")
+	}
+}
+
+func TestFindModel_ExactMatch(t *testing.T) {
+	m, found := FindModel("gpt-5")
+	if !found {
+		t.Fatal("expected to find gpt-5")
+	}
+	if m.ID != "gpt-5" {
+		t.Errorf("expected ID 'gpt-5', got %q", m.ID)
+	}
+}
+
+func TestFindModel_CaseInsensitive(t *testing.T) {
+	m, found := FindModel("GPT-5")
+	if !found {
+		t.Fatal("expected to find GPT-5 via case-insensitive match")
+	}
+	if m.Provider != "OpenAI" {
+		t.Errorf("expected provider 'OpenAI', got %q", m.Provider)
+	}
+}
+
+func TestFindModel_NotFound(t *testing.T) {
+	_, found := FindModel("nonexistent-model-xyz")
+	if found {
+		t.Error("did not expect to find nonexistent model")
+	}
+}
+
+func TestFilterModels_CombinedFilters(t *testing.T) {
+	results := FilterModels("OpenAI", "current", "vision")
+	for _, m := range results {
+		if m.Provider != "OpenAI" {
+			t.Errorf("expected provider OpenAI, got %s", m.Provider)
+		}
+		if m.Status != "current" {
+			t.Errorf("expected status current, got %s", m.Status)
+		}
+		if !m.Vision {
+			t.Errorf("expected vision=true for model %s", m.ID)
+		}
+	}
+	if len(results) == 0 {
+		t.Error("expected at least one OpenAI current vision model")
+	}
+}
+
+func TestFilterModels_UnknownCapability(t *testing.T) {
+	all := FilterModels("", "", "")
+	unknown := FilterModels("", "", "teleportation")
+	// Unknown capability falls through to default (returns all)
+	if len(unknown) != len(all) {
+		t.Errorf("unknown capability should return all models, got %d vs %d", len(unknown), len(all))
+	}
+}
+
+func TestFilterModels_ThinkingCapability(t *testing.T) {
+	results := FilterModels("", "", "thinking")
+	for _, m := range results {
+		if !m.Reasoning {
+			t.Errorf("model %s should have reasoning=true when filtering by thinking", m.ID)
+		}
+	}
+	if len(results) == 0 {
+		t.Error("expected at least one model with thinking/reasoning")
+	}
+}
+
+func TestCaps_VisionOnly(t *testing.T) {
+	m := models.Model{Vision: true, Reasoning: false}
+	result := caps(m)
+	if result != "Vision" {
+		t.Errorf("expected 'Vision', got %q", result)
+	}
+}
+
+func TestCaps_ReasoningOnly(t *testing.T) {
+	m := models.Model{Vision: false, Reasoning: true}
+	result := caps(m)
+	if result != "Reasoning" {
+		t.Errorf("expected 'Reasoning', got %q", result)
+	}
+}
+
+func TestCaps_Both(t *testing.T) {
+	m := models.Model{Vision: true, Reasoning: true}
+	result := caps(m)
+	if result != "Vision, Reasoning" {
+		t.Errorf("expected 'Vision, Reasoning', got %q", result)
+	}
+}
+
+func TestCaps_None(t *testing.T) {
+	m := models.Model{Vision: false, Reasoning: false}
+	result := caps(m)
+	if result != "None" {
+		t.Errorf("expected 'None', got %q", result)
+	}
+}
+
+// ── Additional edge case tests ───────────────────────────────────────────
+
+func TestGetModelInfo_EmptyString(t *testing.T) {
+	result := GetModelInfo("")
+	// Empty string may partial-match everything; just ensure no panic
+	if result == "" {
+		t.Error("expected non-empty result for empty input")
+	}
+}
+
+func TestSearchModels_EmptyString(t *testing.T) {
+	result := SearchModels("")
+	// Empty query should match all models
+	if strings.Contains(result, "No models found") {
+		t.Error("empty search should match all models")
+	}
+}
+
+func TestSearchModels_SpecialCharacters(t *testing.T) {
+	result := SearchModels("!@#$%^&*()")
+	if !strings.Contains(result, "No models found") {
+		t.Errorf("expected 'No models found' for special characters, got: %s", result)
+	}
+}
+
+func TestCompareModels_EmptySlice(t *testing.T) {
+	result := CompareModels([]string{})
+	if !strings.Contains(strings.ToLower(result), "at least 2") {
+		t.Errorf("expected 'at least 2' for empty slice, got: %s", result)
+	}
+}
+
+func TestCompareModels_MoreThanFive(t *testing.T) {
+	ids := []string{"gpt-5", "claude-opus-4-6", "gemini-2.5-pro", "grok-4", "deepseek-chat", "o3"}
+	result := CompareModels(ids)
+	// Should truncate to 5, so "o3" (6th) may or may not appear depending on ordering
+	// but should not error
+	if strings.Contains(strings.ToLower(result), "not found") {
+		t.Error("should not report not found when truncating to 5")
+	}
+	if !strings.Contains(result, "Field") {
+		t.Error("expected comparison table header")
+	}
+}
+
+func TestCompareModels_DuplicateIDs(t *testing.T) {
+	result := CompareModels([]string{"gpt-5", "gpt-5"})
+	// Should work without error - comparing a model with itself
+	if !strings.Contains(result, "GPT-5") {
+		t.Error("expected 'GPT-5' in duplicate comparison")
+	}
+}
+
+func TestListModels_CombinedProviderAndStatus(t *testing.T) {
+	result := ListModels("OpenAI", "current", "")
+	if strings.Contains(result, "deprecated") {
+		t.Error("should not contain deprecated models when filtering for current")
+	}
+	if strings.Contains(result, "Anthropic") {
+		t.Error("should not contain Anthropic models when filtering for OpenAI")
+	}
+}
+
+func TestListModels_InvalidStatus(t *testing.T) {
+	result := ListModels("", "invalid_status", "")
+	if !strings.Contains(result, "No models found") {
+		t.Errorf("expected 'No models found' for invalid status, got: %s", result)
+	}
+}
+
+func TestRecommendModel_EmptyTask(t *testing.T) {
+	result := RecommendModel("", "")
+	// Should still return recommendations even with empty task
+	if !strings.Contains(result, "Recommendations for") {
+		t.Error("expected recommendations even for empty task")
+	}
+	if !strings.Contains(result, "1.") {
+		t.Error("expected at least one recommendation")
+	}
+}
+
+func TestRecommendModel_UnlimitedBudget(t *testing.T) {
+	result := RecommendModel("general tasks", "unlimited")
+	if !strings.Contains(result, "Budget:** unlimited") {
+		t.Error("expected 'Budget:** unlimited' in result")
+	}
+}
+
+func TestRecommendModel_LongContext(t *testing.T) {
+	result := RecommendModel("long context document analysis", "")
+	if !strings.Contains(result, "1.") {
+		t.Error("expected recommendations for long context task")
+	}
+}
+
+func TestRecommendModel_OpenWeight(t *testing.T) {
+	result := RecommendModel("open weight model for self-hosting", "")
+	if !strings.Contains(result, "1.") {
+		t.Error("expected recommendations for open weight task")
+	}
+}
+
+func TestCheckModelStatus_CaseInsensitive(t *testing.T) {
+	result := CheckModelStatus("GPT-5")
+	if !strings.Contains(strings.ToLower(result), "current") {
+		t.Errorf("expected 'current' for case-insensitive GPT-5 lookup, got: %s", result)
+	}
+}
+
+func TestSearchModels_SearchByNotes(t *testing.T) {
+	result := SearchModels("flagship")
+	if strings.Contains(result, "No models found") {
+		t.Error("expected to find models with 'flagship' in notes")
+	}
+	if !strings.Contains(result, "|") {
+		t.Error("expected table format in results")
+	}
+}
+
+func TestSearchModels_SearchByStatus(t *testing.T) {
+	// Search searches ID, DisplayName, Provider, Notes -- not status directly
+	result := SearchModels("deprecated")
+	// "deprecated" might appear in notes but not as a direct status search
+	// just ensure no panic
+	if result == "" {
+		t.Error("expected non-empty result")
+	}
+}

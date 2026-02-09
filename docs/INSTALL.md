@@ -14,7 +14,8 @@ https://universal-model-registry-production.up.railway.app/sse
 One command:
 
 ```bash
-claude mcp add model-id-cheatsheet --transport sse https://universal-model-registry-production.up.railway.app/sse
+claude mcp add --transport sse --scope user model-id-cheatsheet \
+  https://universal-model-registry-production.up.railway.app/sse
 ```
 
 Verify it's connected:
@@ -77,8 +78,8 @@ Add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.model-id-cheatsheet]
-type = "sse"
-url = "https://universal-model-registry-production.up.railway.app/sse"
+command = "uvx"
+args = ["mcp-proxy", "--transport", "sse", "https://universal-model-registry-production.up.railway.app/sse"]
 ```
 
 ---
@@ -89,9 +90,10 @@ Add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
-  "mcpServers": {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
     "model-id-cheatsheet": {
-      "type": "sse",
+      "type": "remote",
       "url": "https://universal-model-registry-production.up.railway.app/sse"
     }
   }

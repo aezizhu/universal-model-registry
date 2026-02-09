@@ -1,6 +1,9 @@
 package models
 
-import "testing"
+import (
+	"regexp"
+	"testing"
+)
 
 func TestAllModelsHaveRequiredFields(t *testing.T) {
 	for key, m := range Models {
@@ -117,6 +120,68 @@ func TestProviderCounts(t *testing.T) {
 	for provider := range counts {
 		if _, ok := expected[provider]; !ok {
 			t.Errorf("unexpected provider %q with %d models", provider, counts[provider])
+		}
+	}
+}
+
+func TestMaxOutputTokensIsPositive(t *testing.T) {
+	for key, m := range Models {
+		if m.MaxOutputTokens <= 0 {
+			t.Errorf("%s: non-positive MaxOutputTokens %d", key, m.MaxOutputTokens)
+		}
+	}
+}
+
+func TestMaxOutputDoesNotExceedContext(t *testing.T) {
+	for key, m := range Models {
+		if m.MaxOutputTokens > m.ContextWindow {
+			t.Errorf("%s: MaxOutputTokens (%d) > ContextWindow (%d)", key, m.MaxOutputTokens, m.ContextWindow)
+		}
+	}
+}
+
+func TestOutputPricingAtLeastInputPricing(t *testing.T) {
+	for key, m := range Models {
+		if m.PricingOutput < m.PricingInput {
+			t.Errorf("%s: output pricing $%.2f < input pricing $%.2f", key, m.PricingOutput, m.PricingInput)
+		}
+	}
+}
+
+func TestDateFormats(t *testing.T) {
+	dateRe := regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
+	for key, m := range Models {
+		if !dateRe.MatchString(m.KnowledgeCutoff) {
+			t.Errorf("%s: KnowledgeCutoff %q does not match YYYY-MM format", key, m.KnowledgeCutoff)
+		}
+		if !dateRe.MatchString(m.ReleaseDate) {
+			t.Errorf("%s: ReleaseDate %q does not match YYYY-MM format", key, m.ReleaseDate)
+		}
+	}
+}
+
+func TestNoDuplicateDisplayNames(t *testing.T) {
+	seen := make(map[string]string) // displayName -> first model ID
+	for key, m := range Models {
+		if prev, ok := seen[m.DisplayName]; ok {
+			t.Errorf("duplicate DisplayName %q: used by both %s and %s", m.DisplayName, prev, key)
+		}
+		seen[m.DisplayName] = key
+	}
+}
+
+func TestEveryProviderHasAtLeastOneCurrentModel(t *testing.T) {
+	providers := make(map[string]bool)
+	currentProviders := make(map[string]bool)
+	for _, m := range Models {
+		providers[m.Provider] = true
+		if m.Status == "current" {
+			currentProviders[m.Provider] = true
+		}
+	}
+	for p := range providers {
+		if !currentProviders[p] {
+			t.Errorf("provider %s has no current models", p)
 		}
 	}
 }

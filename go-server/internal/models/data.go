@@ -213,7 +213,7 @@ var Models = map[string]Model{
 		KnowledgeCutoff: "2024-06",
 		ReleaseDate:     "2025-04",
 		Status:          "legacy",
-		Notes:           "1M context window, strong coding. Retiring from ChatGPT Feb 13, 2026",
+		Notes:           "1M context window, strong coding. Retiring from ChatGPT Feb 13, 2026. Superseded by GPT-5 series",
 	},
 	"gpt-4o": {
 		ID:              "gpt-4o",
@@ -599,8 +599,8 @@ var Models = map[string]Model{
 		Notes:           "Superseded by Llama 4 series, access via third-party providers",
 	},
 	// ─── Mistral: Current ──────────────────────────────────────────────
-	"mistral-large-3-25-12": {
-		ID:              "mistral-large-3-25-12",
+	"mistral-large-2512": {
+		ID:              "mistral-large-2512",
 		DisplayName:     "Mistral Large 3",
 		Provider:        "Mistral",
 		ContextWindow:   256_000,
@@ -637,8 +637,8 @@ var Models = map[string]Model{
 		MaxOutputTokens: 8_192,
 		Vision:          false,
 		Reasoning:       false,
-		PricingInput:    0.05,
-		PricingOutput:   0.22,
+		PricingInput:    0.40,
+		PricingOutput:   2.00,
 		KnowledgeCutoff: "2025-11",
 		ReleaseDate:     "2025-12",
 		Status:          "current",
@@ -649,7 +649,7 @@ var Models = map[string]Model{
 		ID:              "codestral-2508",
 		DisplayName:     "Codestral",
 		Provider:        "Mistral",
-		ContextWindow:   256_000,
+		ContextWindow:   128_000,
 		MaxOutputTokens: 8_192,
 		Vision:          false,
 		Reasoning:       false,

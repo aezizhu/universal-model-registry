@@ -1,11 +1,29 @@
-# Python-generated files
+# Go build artifacts
+go-server/bin/
+go-server/updater
+go-server/server
+
+# Python-generated files (legacy)
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
-
-# Virtual environments
 .venv
-go-server/bin/
+
+# Secrets and environment
+.env
+.env.*
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
