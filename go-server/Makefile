@@ -22,9 +22,9 @@ clean: ## Remove build artifacts
 	rm -rf bin/
 
 docker-build: ## Build Docker image
-	docker build -t universal-model-registry-go .
+	docker build -t model-id-cheatsheet .
 
 docker-run: ## Run Docker container
-	docker run -p 8000:8000 universal-model-registry-go
+	docker run -p 8000:8000 model-id-cheatsheet
 
 check: lint test ## Run lint and tests

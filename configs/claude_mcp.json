@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "universal-model-registry": {
+    "model-id-cheatsheet": {
       "type": "sse",
       "url": "https://universal-model-registry-production.up.railway.app/sse"
     }

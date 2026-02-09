@@ -27,7 +27,7 @@ type SearchModelsInput struct {
 func main() {
 	server := mcp.NewServer(
 		&mcp.Implementation{
-			Name:    "universal-model-registry",
+			Name:    "model-id-cheatsheet",
 			Version: "1.0.0",
 		},
 		&mcp.ServerOptions{
@@ -158,7 +158,7 @@ func main() {
 
 	// ── Start Server ────────────────────────────────────────────────────
 
-	fmt.Fprintf(os.Stderr, "Universal Model Registry — %d models loaded\n", len(models.Models))
+	fmt.Fprintf(os.Stderr, "Model ID Cheatsheet — %d models loaded\n", len(models.Models))
 
 	transport := os.Getenv("MCP_TRANSPORT")
 	switch transport {

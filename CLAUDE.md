@@ -1,4 +1,4 @@
-# Universal Model Registry
+# Model ID Cheatsheet
 
 MCP server exposing a curated, static registry of 42 AI models across 7 providers. Built in Go with the official MCP SDK.
 
