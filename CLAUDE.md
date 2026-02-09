@@ -1,62 +1,62 @@
 # Universal Model Registry
 
-MCP server exposing a curated, static registry of current AI models. No API keys, no database — just a Python dict.
+MCP server exposing a curated, static registry of 42 AI models across 7 providers. Built in Go with the official MCP SDK.
 
 ## Architecture
 
-Flat-file FastMCP server. Model data lives in a static Python dict (`MODELS` in `models_data.py`). The server (`registry.py`) exposes tools and resources over MCP (stdio or SSE transport). No external calls at runtime.
+Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data lives in a static Go map (`models.Models` in `internal/models/data.go`). The server exposes 6 tools and 3 resources over MCP (stdio, SSE, or streamable-http transport). No external calls at runtime. Single ~10MB binary.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `registry.py` | MCP server entry point — tools, resources, helpers |
-| `models_data.py` | `MODELS` dict with all model entries |
-| `tests/test_registry.py` | Pytest tests for all tools and data integrity |
-| `pyproject.toml` | Project config, Python >=3.12, deps: `fastmcp` |
-| `Dockerfile` | Production container (SSE transport on port 8000) |
+| `go-server/cmd/server/main.go` | Entry point — registers tools, resources, starts transport |
+| `go-server/internal/models/data.go` | `Models` map with all 42 model entries |
+| `go-server/internal/models/models.go` | `Model` struct definition |
+| `go-server/internal/tools/*.go` | 6 tool handlers + shared helpers |
+| `go-server/internal/resources/resources.go` | 3 resource handlers |
+| `go-server/internal/models/data_test.go` | Data integrity tests |
+| `go-server/internal/tools/tools_test.go` | Tool unit tests |
+| `Dockerfile` | Production container (Go multi-stage, SSE on port 8000) |
 
 ## Running
 
 ```bash
-# Install deps and run tests
-uv sync && uv run pytest tests/ -v
+cd go-server
+
+# Run tests
+go test ./... -v
+
+# Build
+go build -o bin/server ./cmd/server
 
 # Local server (stdio)
-uv run python registry.py
+./bin/server
 
 # Local server (SSE)
-MCP_TRANSPORT=sse uv run python registry.py
+MCP_TRANSPORT=sse ./bin/server
 
 # Docker
-docker build -t model-registry . && docker run -p 8000:8000 model-registry
+docker build -t model-registry -f ../Dockerfile .. && docker run -p 8000:8000 model-registry
 ```
 
 ## Adding a New Model
 
-1. Add an entry to the `MODELS` dict in `models_data.py` following the existing schema (all 13 keys required: `id`, `display_name`, `provider`, `context_window`, `max_output_tokens`, `vision`, `reasoning`, `pricing_input`, `pricing_output`, `knowledge_cutoff`, `release_date`, `status`, `notes`)
-2. Ensure `id` matches the dict key
-3. Run tests: `uv run pytest tests/ -v`
+1. Add an entry to the `Models` map in `go-server/internal/models/data.go` following the existing schema (all 13 fields: ID, DisplayName, Provider, ContextWindow, MaxOutputTokens, Vision, Reasoning, PricingInput, PricingOutput, KnowledgeCutoff, ReleaseDate, Status, Notes)
+2. Ensure `ID` matches the map key
+3. Update `TestTotalModelCount` and `TestProviderCounts` in `data_test.go`
+4. Run tests: `go test ./... -v`
 
 ## Adding a New Tool
 
-1. Add a `@mcp.tool()` function in `registry.py`
-2. Add corresponding tests in `tests/test_registry.py`
-3. Unwrap with `.fn` for testing — FastMCP wraps tools in `FunctionTool` objects, so use `tool_name.fn` to get the raw callable
-
-## Testing Gotcha
-
-FastMCP `@mcp.tool()` wraps functions in `FunctionTool` objects. In tests, import the tool and access `.fn` to get the underlying function:
-
-```python
-from registry import my_tool as _my_tool
-my_tool = _my_tool.fn
-```
+1. Create a new file in `go-server/internal/tools/` with input struct + handler function
+2. Register in `cmd/server/main.go` via `mcp.AddTool()`
+3. Add tests in `tools_test.go`
 
 ## Coding Conventions
 
-- Python 3.12+
-- Type hints on function signatures
-- Docstrings on public functions
-- `ruff` for formatting/linting
+- Go 1.23+
+- `golangci-lint` for linting
+- `go fmt` for formatting
 - Valid `status` values: `current`, `legacy`, `deprecated`
+- Exported functions and types for cross-package use

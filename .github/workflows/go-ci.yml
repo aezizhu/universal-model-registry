@@ -2,9 +2,9 @@ name: Go CI
 
 on:
   push:
-    paths: ['go-server/**']
+    branches: [main]
   pull_request:
-    paths: ['go-server/**']
+    branches: [main]
 
 jobs:
   test:
