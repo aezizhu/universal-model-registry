@@ -11,6 +11,9 @@ from registry import (
     get_model_info as _get_model_info,
 )
 from registry import (
+    get_pricing_summary as _get_pricing_summary,
+)
+from registry import (
     list_models as _list_models,
 )
 from registry import (
@@ -18,9 +21,6 @@ from registry import (
 )
 from registry import (
     search_models as _search_models,
-)
-from registry import (
-    get_pricing_summary as _get_pricing_summary,
 )
 
 # FastMCP @mcp.tool() wraps functions in FunctionTool objects.
@@ -32,9 +32,7 @@ check_model_status = _check_model_status.fn
 compare_models = _compare_models.fn
 search_models = _search_models.fn
 get_pricing_summary = (
-    _get_pricing_summary.fn
-    if hasattr(_get_pricing_summary, "fn")
-    else _get_pricing_summary
+    _get_pricing_summary.fn if hasattr(_get_pricing_summary, "fn") else _get_pricing_summary
 )
 
 
@@ -291,9 +289,9 @@ class TestPricingSummary:
     def test_sorted_by_price(self):
         result = get_pricing_summary()
         lines = [
-            l
-            for l in result.split("\n")
-            if l.startswith("| ") and "Model ID" not in l and "---" not in l
+            line
+            for line in result.split("\n")
+            if line.startswith("| ") and "Model ID" not in line and "---" not in line
         ]
         prices = []
         for line in lines:

@@ -71,4 +71,4 @@ def tool_compare_models():
 @pytest.fixture
 def sample_model_ids():
     """A curated set of model IDs for cross-provider testing."""
-    return ["gpt-5", "claude-opus-4-6", "gemini-2.5-pro", "grok-3", "deepseek-r1"]
+    return ["gpt-5", "claude-opus-4-6", "gemini-2.5-pro", "grok-3", "deepseek-reasoner"]

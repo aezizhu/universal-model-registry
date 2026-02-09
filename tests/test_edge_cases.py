@@ -111,7 +111,7 @@ class TestCompareModelsBoundary:
             "gemini-2.5-pro",
             "grok-3",
             "o3",
-            "deepseek-r1",
+            "deepseek-reasoner",
         ]
         result = compare_models(ids)
         # First 5 should be present
@@ -121,7 +121,7 @@ class TestCompareModelsBoundary:
         assert "Grok 3" in result
         assert "o3" in result
         # 6th model should be truncated
-        assert "DeepSeek R1" not in result
+        assert "DeepSeek Reasoner" not in result
 
     def test_empty_list(self):
         result = compare_models([])
