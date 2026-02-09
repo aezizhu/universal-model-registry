@@ -1,26 +1,17 @@
 {
-  "name": "model-id-cheatsheet",
-  "description": "Stop your AI agent from hallucinating outdated model names. Instant lookup of correct API model IDs, pricing, and specs for 46 models across 7 providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral, DeepSeek). Auto-updated weekly.",
-  "version": "1.0.0",
-  "transport": {
-    "type": "sse",
-    "url": "https://universal-model-registry-production.up.railway.app/sse"
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aezizhu/model-id-cheatsheet",
+  "title": "Model ID Cheatsheet",
+  "description": "Accurate API model IDs, pricing, and specs for 46 models across 7 AI providers.",
+  "repository": {
+    "url": "https://github.com/aezizhu/universal-model-registry",
+    "source": "github"
   },
-  "tools": [
-    {"name": "list_models", "description": "Browse and filter models by provider, status, or capability"},
-    {"name": "get_model_info", "description": "Get exact API model ID, pricing, context window, and capabilities for any model"},
-    {"name": "recommend_model", "description": "Get ranked model recommendations for a specific task and budget"},
-    {"name": "check_model_status", "description": "Check if a model ID is current, legacy, or deprecated with replacement suggestions"},
-    {"name": "compare_models", "description": "Side-by-side comparison table of 2-5 models"},
-    {"name": "search_models", "description": "Free-text search across all model fields"}
-  ],
-  "resources": [
-    {"uri": "model://registry/all", "description": "Full JSON dump of all 46 models"},
-    {"uri": "model://registry/current", "description": "Only current (non-deprecated) models"},
-    {"uri": "model://registry/pricing", "description": "Pricing table sorted cheapest-first"}
-  ],
-  "repository": "https://github.com/aezizhu/universal-model-registry",
-  "license": "MIT",
-  "author": "aezizhu",
-  "tags": ["ai-models", "api", "model-ids", "pricing", "coding-assistant", "mcp"]
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "sse",
+      "url": "https://universal-model-registry-production.up.railway.app/sse"
+    }
+  ]
 }
