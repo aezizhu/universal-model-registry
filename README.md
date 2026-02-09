@@ -248,7 +248,7 @@ Model data is automatically checked every Monday via a GitHub Actions workflow. 
 - **MCP SDK**: `github.com/modelcontextprotocol/go-sdk` v1.3.0 (official)
 - **Transports**: stdio, SSE, Streamable HTTP
 - **Binary size**: ~10MB
-- **Tests**: 83 unit tests
+- **Tests**: 96 unit tests
 - **Security**: Per-IP rate limiting, connection limits, input sanitization
 - **Deploy**: Docker (alpine), Railway
 
