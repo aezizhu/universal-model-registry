@@ -1,16 +1,29 @@
-# Model ID Cheatsheet (MCP Server)
+# Model ID Cheatsheet
 
-Stop your AI coding agent from hallucinating outdated model names. This MCP server gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **46 models across 7 providers**.
+Stop your AI coding agent from hallucinating outdated model names. This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **46 models across 7 providers**.
 
 Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses. Auto-updated weekly.
 
 ## Why?
 
-When you ask an AI coding agent to "use the latest OpenAI model", it might generate `gpt-4-turbo` (deprecated) instead of `gpt-5.2` (current). This MCP server solves that by giving your agent a tool it can call to look up the correct model ID before writing code.
+When you ask an AI coding agent to "use the latest OpenAI model", it might generate `gpt-4-turbo` (deprecated) instead of `gpt-5.2` (current). This plugin solves that by giving your agent a tool it can call to look up the correct model ID before writing code.
 
 **Example:** Your agent needs to write an API call. Instead of guessing, it calls `get_model_info("gpt-5.2")` and gets back the exact API model ID, pricing, context window, and capabilities — verified against official docs.
 
-## Quick Install (Pick Your IDE)
+## Install as Plugin (Recommended)
+
+### Claude Code Plugin
+
+```bash
+/plugin marketplace add aezizhu/universal-model-registry
+/plugin install model-id-cheatsheet
+```
+
+That's it. Claude Code gets 6 tools + a smart lookup skill that automatically verifies model IDs before writing code.
+
+## Alternative: Direct MCP Connection
+
+If you prefer to connect directly to the MCP server without the plugin:
 
 ### Claude Code (one command)
 
@@ -19,7 +32,7 @@ claude mcp add --transport sse --scope user model-id-cheatsheet \
   https://universal-model-registry-production.up.railway.app/sse
 ```
 
-That's it. Claude Code can now call `list_models`, `get_model_info`, `recommend_model`, etc.
+Claude Code can now call `list_models`, `get_model_info`, `recommend_model`, etc.
 
 ### Cursor
 

@@ -17,6 +17,10 @@ wheels/
 .env.*
 *.pem
 *.key
+.mcpregistry_*
+
+# Build tools
+mcp-publisher
 
 # IDE
 .idea/

@@ -1,0 +1,11 @@
+{
+  "name": "model-id-cheatsheet",
+  "description": "Stop your AI agent from hallucinating outdated model names. Gives Claude instant access to accurate API model IDs, pricing, and specs for 46 models across 7 providers.",
+  "version": "1.0.0",
+  "author": {
+    "name": "aezizhu"
+  },
+  "homepage": "https://github.com/aezizhu/universal-model-registry",
+  "repository": "https://github.com/aezizhu/universal-model-registry",
+  "license": "MIT"
+}
