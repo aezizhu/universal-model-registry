@@ -1,13 +1,7 @@
 {
   "mcpServers": {
     "universal-model-registry": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/Users/aezi/Desktop/universal-model-registry",
-        "registry.py"
-      ]
+      "url": "https://universal-model-registry-production.up.railway.app/sse"
     }
   }
 }

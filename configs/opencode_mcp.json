@@ -1,7 +1,8 @@
 {
-  "mcpServers": {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
     "universal-model-registry": {
-      "type": "sse",
+      "type": "remote",
       "url": "https://universal-model-registry-production.up.railway.app/sse"
     }
   }

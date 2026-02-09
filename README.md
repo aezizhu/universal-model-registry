@@ -4,20 +4,20 @@ A lightweight MCP server that exposes a curated, static registry of current AI m
 
 **No API keys required.** Data is a static Python dict — no external calls.
 
-## Setup
+## Deployed Instance
+
+SSE endpoint: `https://universal-model-registry-production.up.railway.app/sse`
+
+## Local Development
 
 ```bash
 cd ~/Desktop/universal-model-registry
 uv sync
+uv run registry.py              # stdio transport (default)
+MCP_TRANSPORT=sse uv run registry.py  # SSE transport (HTTP server)
 ```
 
-## Run
-
-```bash
-uv run registry.py
-```
-
-Or use the FastMCP inspector for interactive testing:
+Interactive testing with FastMCP inspector:
 
 ```bash
 uv run fastmcp dev registry.py
@@ -41,19 +41,68 @@ uv run fastmcp dev registry.py
 
 ## Connect to Your IDE
 
+All configs use the deployed Railway SSE endpoint. See `configs/` for copy-paste examples.
+
 ### Claude Code
 
-Copy `configs/claude_mcp.json` to your project's `.mcp.json`, or add the server entry to `~/.claude/claude_code_config.json`.
+```bash
+claude mcp add --transport sse --scope user universal-model-registry \
+  https://universal-model-registry-production.up.railway.app/sse
+```
+
+### Codex
+
+Add to `~/.codex/config.toml` (uses `mcp-proxy` to bridge stdio to SSE):
+
+```toml
+[mcp_servers.universal-model-registry]
+command = "uvx"
+args = ["mcp-proxy", "--transport", "sse", "https://universal-model-registry-production.up.railway.app/sse"]
+```
+
+### OpenCode
+
+Add to `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "universal-model-registry": {
+      "type": "remote",
+      "url": "https://universal-model-registry-production.up.railway.app/sse"
+    }
+  }
+}
+```
 
 ### Cursor
 
-Merge `configs/cursor_mcp.json` into `~/.cursor/mcp.json`.
+Merge into `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "universal-model-registry": {
+      "url": "https://universal-model-registry-production.up.railway.app/sse"
+    }
+  }
+}
+```
 
 ### Windsurf
 
-Merge `configs/windsurf_mcp.json` into your Windsurf MCP config.
+Merge into your Windsurf MCP config:
 
-**Important:** Update the `--directory` path in the config if you move the project.
+```json
+{
+  "mcpServers": {
+    "universal-model-registry": {
+      "serverUrl": "https://universal-model-registry-production.up.railway.app/sse"
+    }
+  }
+}
+```
 
 ## Covered Providers & Models
 

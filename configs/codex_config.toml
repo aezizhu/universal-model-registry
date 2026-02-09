@@ -1,0 +1,4 @@
+# Add this to ~/.codex/config.toml
+[mcp_servers.universal-model-registry]
+command = "uvx"
+args = ["mcp-proxy", "--transport", "sse", "https://universal-model-registry-production.up.railway.app/sse"]
