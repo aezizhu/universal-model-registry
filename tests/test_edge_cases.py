@@ -2,11 +2,19 @@
 
 from models_data import MODELS
 from registry import (
-    list_models as _list_models,
-    get_model_info as _get_model_info,
-    recommend_model as _recommend_model,
     check_model_status as _check_model_status,
+)
+from registry import (
     compare_models as _compare_models,
+)
+from registry import (
+    get_model_info as _get_model_info,
+)
+from registry import (
+    list_models as _list_models,
+)
+from registry import (
+    recommend_model as _recommend_model,
 )
 
 list_models = _list_models.fn
