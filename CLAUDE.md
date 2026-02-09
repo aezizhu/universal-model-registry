@@ -4,7 +4,7 @@ MCP server exposing a curated, static registry of 46 AI models across 7 provider
 
 ## Architecture
 
-Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data lives in a static Go map (`models.Models` in `internal/models/data.go`). The server exposes 6 tools and 3 resources over MCP (stdio, SSE, or streamable-http transport). No external calls at runtime. Single ~10MB binary.
+Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data lives in a static Go map (`models.Models` in `internal/models/data.go`). The server exposes 6 tools and 3 resources over MCP (stdio, SSE, or streamable-http transport). HTTP transports (SSE, streamable-http) are protected by rate limiting and connection limits via `internal/middleware`. No external calls at runtime. Single ~10MB binary.
 
 ## Key Files
 
@@ -17,6 +17,7 @@ Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data live
 | `go-server/internal/resources/resources.go` | 3 resource handlers |
 | `go-server/internal/models/data_test.go` | Data integrity tests |
 | `go-server/internal/tools/tools_test.go` | Tool unit tests |
+| `go-server/internal/middleware/` | Rate limiting and connection limit middleware |
 | `Dockerfile` | Production container (Go multi-stage, SSE on port 8000) |
 
 ## Running

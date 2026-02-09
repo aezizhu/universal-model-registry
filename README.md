@@ -226,6 +226,18 @@ Agent calls: compare_models(["claude-opus-4-6", "gpt-5.2"])
 Agent gets: Side-by-side table of pricing, context, capabilities
 ```
 
+## Security
+
+### Built-in Protection
+
+- **Rate limiting**: 60 requests/minute per IP
+- **Connection limits**: Max 5 SSE connections per IP, 100 total
+- **Request body limit**: 64KB max
+- **Input sanitization**: All string inputs truncated to safe lengths
+- **HTTP hardening**: ReadTimeout 15s, ReadHeaderTimeout 5s, IdleTimeout 120s, 64KB max headers
+- **Non-root Docker**: Containers run as unprivileged user
+- **Graceful shutdown**: Clean connection draining on SIGINT/SIGTERM
+
 ## Staying Up to Date
 
 Model data is automatically checked every Monday via a GitHub Actions workflow. The updater queries each provider's API to detect new models, deprecations, or pricing changes, and opens a GitHub issue if updates are needed. You can also trigger it manually via `workflow_dispatch`.
@@ -237,6 +249,7 @@ Model data is automatically checked every Monday via a GitHub Actions workflow. 
 - **Transports**: stdio, SSE, Streamable HTTP
 - **Binary size**: ~10MB
 - **Tests**: 83 unit tests
+- **Security**: Per-IP rate limiting, connection limits, input sanitization
 - **Deploy**: Docker (alpine), Railway
 
 ## Contributing

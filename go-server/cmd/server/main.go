@@ -6,9 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"go-server/internal/middleware"
 	"go-server/internal/models"
 	"go-server/internal/resources"
 	"go-server/internal/tools"
@@ -54,7 +58,7 @@ func main() {
 		Name:        "get_model_info",
 		Description: "Get full specifications for a specific model by its API model ID.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, input GetModelInfoInput) (*mcp.CallToolResult, any, error) {
-		result := tools.GetModelInfo(input.ModelID)
+		result := tools.GetModelInfo(truncate(input.ModelID, 256))
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
@@ -64,7 +68,7 @@ func main() {
 		Name:        "search_models",
 		Description: "Search for models by keyword across names, providers, and notes.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, input SearchModelsInput) (*mcp.CallToolResult, any, error) {
-		result := tools.SearchModels(input.Query)
+		result := tools.SearchModels(truncate(input.Query, 512))
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
@@ -74,7 +78,7 @@ func main() {
 		Name:        "recommend_model",
 		Description: "Recommend the best model for a given task and budget.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, input tools.RecommendModelInput) (*mcp.CallToolResult, any, error) {
-		result := tools.RecommendModel(input.Task, input.Budget)
+		result := tools.RecommendModel(truncate(input.Task, 1024), truncate(input.Budget, 64))
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
@@ -84,7 +88,7 @@ func main() {
 		Name:        "check_model_status",
 		Description: "Check whether a model ID is current, legacy, or deprecated.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, input tools.CheckModelStatusInput) (*mcp.CallToolResult, any, error) {
-		result := tools.CheckModelStatus(input.ModelID)
+		result := tools.CheckModelStatus(truncate(input.ModelID, 256))
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
@@ -94,7 +98,11 @@ func main() {
 		Name:        "compare_models",
 		Description: "Compare 2-5 models side by side in a markdown table.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, input tools.CompareModelsInput) (*mcp.CallToolResult, any, error) {
-		result := tools.CompareModels(input.ModelIDs)
+		ids := input.ModelIDs
+		for i := range ids {
+			ids[i] = truncate(ids[i], 256)
+		}
+		result := tools.CompareModels(ids)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: result}},
 		}, nil, nil
@@ -163,34 +171,73 @@ func main() {
 	transport := os.Getenv("MCP_TRANSPORT")
 	switch transport {
 	case "sse":
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "8000"
-		}
-		addr := ":" + port
-		fmt.Fprintf(os.Stderr, "Starting SSE server on %s\n", addr)
-		handler := mcp.NewSSEHandler(func(_ *http.Request) *mcp.Server {
+		serveHTTP("SSE", mcp.NewSSEHandler(func(_ *http.Request) *mcp.Server {
 			return server
-		}, nil)
-		log.Fatal(http.ListenAndServe(addr, handler))
+		}, nil))
 
 	case "streamable-http":
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "8000"
-		}
-		addr := ":" + port
-		fmt.Fprintf(os.Stderr, "Starting Streamable HTTP server on %s\n", addr)
-		handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
+		serveHTTP("Streamable HTTP", mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 			return server
-		}, nil)
-		log.Fatal(http.ListenAndServe(addr, handler))
+		}, nil))
 
 	default:
-		// stdio transport (default)
+		// stdio transport (default) — no HTTP, no rate limiting needed.
 		fmt.Fprintln(os.Stderr, "Starting stdio transport")
 		if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 			log.Fatalf("Server error: %v", err)
 		}
 	}
+}
+
+// serveHTTP starts an HTTP server with timeouts, rate limiting, and graceful shutdown.
+func serveHTTP(label string, handler http.Handler) {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	addr := ":" + port
+
+	limiter := middleware.NewLimiter(middleware.DefaultConfig())
+	protected := limiter.Wrap(handler)
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           protected,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      0, // SSE requires no write timeout (long-lived streams).
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 16, // 64KB max headers.
+	}
+
+	// Graceful shutdown on SIGINT/SIGTERM.
+	done := make(chan struct{})
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		fmt.Fprintln(os.Stderr, "\nShutting down gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Shutdown error: %v\n", err)
+		}
+		close(done)
+	}()
+
+	fmt.Fprintf(os.Stderr, "Starting %s server on %s (rate limit: %d req/min, max %d conns)\n",
+		label, addr, middleware.DefaultConfig().RequestsPerWindow, middleware.DefaultConfig().MaxTotalConns)
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("Server error: %v", err)
+	}
+	<-done
+}
+
+// truncate limits string length to prevent abuse from oversized inputs.
+func truncate(s string, maxLen int) string {
+	if len(s) > maxLen {
+		return s[:maxLen]
+	}
+	return s
 }

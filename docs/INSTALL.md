@@ -7,6 +7,8 @@ Connect the **model-id-cheatsheet** MCP server to your AI coding tool. Choose yo
 https://universal-model-registry-production.up.railway.app/sse
 ```
 
+> **Rate limits:** The hosted endpoint allows 60 requests/min and 5 concurrent SSE connections per IP. Normal usage stays well within these limits.
+
 ---
 
 ## Claude Code
