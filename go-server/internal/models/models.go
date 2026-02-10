@@ -37,6 +37,28 @@ var Aliases = map[string]string{
 // FormatInt formats an integer with comma separators.
 func FormatInt(n int) string {
 	if n < 0 {
+		if -n < 0 {
+			// math.MinInt: -n overflows back to negative.
+			// Format the string representation directly.
+			s := fmt.Sprintf("%d", n)
+			digits := s[1:]
+			var result strings.Builder
+			result.WriteByte('-')
+			rem := len(digits) % 3
+			if rem > 0 {
+				result.WriteString(digits[:rem])
+				if len(digits) > rem {
+					result.WriteString(",")
+				}
+			}
+			for i := rem; i < len(digits); i += 3 {
+				if i > rem {
+					result.WriteString(",")
+				}
+				result.WriteString(digits[i : i+3])
+			}
+			return result.String()
+		}
 		return "-" + FormatInt(-n)
 	}
 	if n < 1000 {

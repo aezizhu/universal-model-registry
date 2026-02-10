@@ -580,11 +580,77 @@ func TestSearchModels_SearchByNotes(t *testing.T) {
 }
 
 func TestSearchModels_SearchByStatus(t *testing.T) {
-	// Search searches ID, DisplayName, Provider, Notes -- not status directly
+	// SearchModels searches ID, DisplayName, Provider, Status, and Notes
 	result := SearchModels("deprecated")
-	// "deprecated" might appear in notes but not as a direct status search
-	// just ensure no panic
-	if result == "" {
-		t.Error("expected non-empty result")
+	if strings.Contains(result, "No models found") {
+		t.Error("expected to find deprecated models when searching by status")
+	}
+	if !strings.Contains(result, "deprecated") {
+		t.Error("expected 'deprecated' in result when searching by status")
+	}
+}
+
+// ── Alias resolution tests ───────────────────────────────────────────
+
+func TestFindModel_AliasResolution(t *testing.T) {
+	m, found := FindModel("claude-sonnet-4-5")
+	if !found {
+		t.Fatal("expected to find model via alias 'claude-sonnet-4-5'")
+	}
+	if m.ID != "claude-sonnet-4-5-20250929" {
+		t.Errorf("expected alias to resolve to 'claude-sonnet-4-5-20250929', got %q", m.ID)
+	}
+}
+
+func TestFindModel_AliasResolution_Haiku(t *testing.T) {
+	m, found := FindModel("claude-haiku-4-5")
+	if !found {
+		t.Fatal("expected to find model via alias 'claude-haiku-4-5'")
+	}
+	if m.ID != "claude-haiku-4-5-20251001" {
+		t.Errorf("expected alias to resolve to 'claude-haiku-4-5-20251001', got %q", m.ID)
+	}
+}
+
+func TestFindModel_AliasResolution_DateAlias(t *testing.T) {
+	m, found := FindModel("gpt-4o-2024-05-13")
+	if !found {
+		t.Fatal("expected to find model via alias 'gpt-4o-2024-05-13'")
+	}
+	if m.ID != "gpt-4o" {
+		t.Errorf("expected alias to resolve to 'gpt-4o', got %q", m.ID)
+	}
+}
+
+// ── SuggestModels tests ──────────────────────────────────────────────
+
+func TestSuggestModels_ClosestMatch(t *testing.T) {
+	suggestions := SuggestModels("gpt-55", 3)
+	if len(suggestions) == 0 {
+		t.Fatal("expected at least one suggestion")
+	}
+	// "gpt-5" should be the closest match (edit distance 1)
+	if suggestions[0] != "gpt-5" {
+		t.Errorf("expected first suggestion to be 'gpt-5', got %q", suggestions[0])
+	}
+}
+
+func TestSuggestModels_ReturnsRequestedCount(t *testing.T) {
+	suggestions := SuggestModels("nonexistent", 5)
+	if len(suggestions) != 5 {
+		t.Errorf("expected 5 suggestions, got %d", len(suggestions))
+	}
+}
+
+func TestSuggestModels_CaseInsensitive(t *testing.T) {
+	lower := SuggestModels("GPT-55", 3)
+	upper := SuggestModels("gpt-55", 3)
+	if len(lower) != len(upper) {
+		t.Fatal("case should not affect suggestion count")
+	}
+	for i := range lower {
+		if lower[i] != upper[i] {
+			t.Errorf("suggestion %d differs: %q vs %q", i, lower[i], upper[i])
+		}
 	}
 }

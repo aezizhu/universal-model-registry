@@ -84,6 +84,7 @@ var knownModels = map[string]map[string]bool{
 	"DeepSeek": {
 		"deepseek-reasoner": true,
 		"deepseek-chat":     true,
+		"deepseek-r1":       true,
 		"deepseek-v3":       true,
 	},
 	"Meta": {

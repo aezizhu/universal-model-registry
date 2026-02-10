@@ -199,12 +199,14 @@ func recencyBonus(releaseDate string) float64 {
 	currentMonths := now.Year()*12 + int(now.Month())
 	monthsAgo := float64(currentMonths - releaseMonths)
 
-	bonus := 1.5 * (1.0 - monthsAgo/18.0)
+	// Full bonus for models released in the last 6 months
+	if monthsAgo <= 6 {
+		return 1.5
+	}
+	// Linear decay from 1.5 to 0 between 6 and 18 months
+	bonus := 1.5 * (1.0 - (monthsAgo-6)/12.0)
 	if bonus < 0 {
 		bonus = 0
-	}
-	if bonus > 1.5 {
-		bonus = 1.5
 	}
 	return bonus
 }
