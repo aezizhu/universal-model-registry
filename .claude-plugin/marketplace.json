@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "model-id-cheatsheet",
-      "source": ".",
+      "source": "./",
       "description": "Gives Claude instant access to accurate API model IDs, pricing, and specs for 46 models across 7 providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral, DeepSeek). Auto-updated weekly.",
       "version": "1.0.0",
       "keywords": ["ai-models", "model-ids", "pricing", "mcp", "openai", "anthropic", "gemini", "claude", "gpt"],
