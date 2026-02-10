@@ -590,6 +590,17 @@ func TestSearchModels_SearchByStatus(t *testing.T) {
 	}
 }
 
+func TestSearchModels_MultiWord(t *testing.T) {
+	// Multi-word queries should match across different fields
+	result := SearchModels("zhipu glm")
+	if strings.Contains(result, "No models found") {
+		t.Error("expected 'zhipu glm' to find Zhipu GLM models (provider + ID)")
+	}
+	if !strings.Contains(result, "glm-4.7") {
+		t.Error("expected glm-4.7 in results for 'zhipu glm'")
+	}
+}
+
 // ── Alias resolution tests ───────────────────────────────────────────
 
 func TestFindModel_AliasResolution(t *testing.T) {
