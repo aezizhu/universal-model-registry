@@ -1,3 +1,6 @@
+# OPTIONAL: GitHub Actions alternative for auto-updating models.
+# The primary auto-update mechanism is the Railway cron service (see configs/railway-updater.toml).
+# Use this workflow if you self-host without Railway, or as a backup.
 name: Auto Update Models
 
 on:

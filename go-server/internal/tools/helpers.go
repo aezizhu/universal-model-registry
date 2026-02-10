@@ -43,7 +43,10 @@ func FormatTable(ms []models.Model) string {
 		if sorted[i].Provider != sorted[j].Provider {
 			return sorted[i].Provider < sorted[j].Provider
 		}
-		return sorted[i].ReleaseDate > sorted[j].ReleaseDate
+		if sorted[i].ReleaseDate != sorted[j].ReleaseDate {
+			return sorted[i].ReleaseDate > sorted[j].ReleaseDate
+		}
+		return sorted[i].ID < sorted[j].ID
 	})
 
 	rows := []string{

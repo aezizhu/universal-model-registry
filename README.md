@@ -286,7 +286,16 @@ For Cursor (local):
 
 ## Staying Up to Date
 
-Model data is automatically checked daily at 7 PM Pacific Time via a GitHub Actions workflow. The updater queries each provider's API to detect new models, deprecations, or pricing changes, and opens a GitHub issue if updates are needed. You can also trigger it manually via `workflow_dispatch`.
+Model data is automatically checked **daily at 7 PM Pacific Time** via a Railway cron service. The updater queries each provider's API to detect new models, deprecations, or pricing changes, and opens a GitHub issue if updates are needed.
+
+<details>
+<summary><strong>Auto-Update Options</strong></summary>
+
+**Railway Cron (primary)** — The hosted instance uses a Railway cron service that runs the updater daily. See `configs/railway-updater.toml` for the configuration. Required env vars: provider API keys + optional `GITHUB_TOKEN` and `GITHUB_REPO` for automatic issue creation.
+
+**GitHub Actions (alternative)** — A GitHub Actions workflow is also included at `.github/workflows/auto-update.yml` for users who self-host without Railway. Set up your provider API keys as repository secrets and the workflow runs on the same daily schedule.
+
+</details>
 
 ## Tech Stack
 

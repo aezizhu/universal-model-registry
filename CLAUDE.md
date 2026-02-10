@@ -19,6 +19,10 @@ Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data live
 | `go-server/internal/tools/tools_test.go` | Tool unit tests |
 | `go-server/internal/middleware/` | Rate limiting and connection limit middleware |
 | `Dockerfile` | Production container (Go multi-stage, SSE on port 8000) |
+| `Dockerfile.updater` | Cron container for auto-update checks |
+| `go-server/cmd/updater/main.go` | Auto-update engine (queries provider APIs, creates GitHub issues) |
+| `railway.toml` | Railway config for MCP server service |
+| `configs/railway-updater.toml` | Railway config for auto-update cron service |
 
 ## Running
 

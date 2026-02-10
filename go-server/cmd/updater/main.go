@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -139,20 +140,29 @@ func main() {
 	hasErrors := false
 	providerOrder := []string{"OpenAI", "Anthropic", "Google", "Mistral", "xAI", "DeepSeek"}
 
-	fmt.Println("=== Model Registry Update Check ===")
-	fmt.Printf("Time: %s\n\n", time.Now().UTC().Format(time.RFC3339))
+	// Capture report output for GitHub issue creation.
+	var report strings.Builder
+
+	logf := func(format string, args ...any) {
+		line := fmt.Sprintf(format, args...)
+		fmt.Print(line)
+		report.WriteString(line)
+	}
+
+	logf("=== Model Registry Update Check ===\n")
+	logf("Time: %s\n\n", time.Now().UTC().Format(time.RFC3339))
 
 	for _, name := range providerOrder {
 		p := providers[name]
 		key := os.Getenv(p.AuthEnv)
 		if key == "" {
-			fmt.Printf("[%s] SKIP: %s not set\n", name, p.AuthEnv)
+			logf("[%s] SKIP: %s not set\n", name, p.AuthEnv)
 			continue
 		}
 
 		ids, err := fetchModelsWithRetry(ctx, client, name, p, key)
 		if err != nil {
-			fmt.Printf("[%s] ERROR: %v\n", name, err)
+			logf("[%s] ERROR: %v\n", name, err)
 			hasErrors = true
 			continue
 		}
@@ -160,50 +170,50 @@ func main() {
 		known := knownModels[name]
 		newModels, missing := diff(known, ids)
 
-		fmt.Printf("[%s] API returned %d models, we track %d\n", name, len(ids), len(known))
+		logf("[%s] API returned %d models, we track %d\n", name, len(ids), len(known))
 
 		if len(newModels) > 0 {
 			hasChanges = true
 			sort.Strings(newModels)
-			fmt.Printf("  NEW (%d):\n", len(newModels))
+			logf("  NEW (%d):\n", len(newModels))
 			for _, m := range newModels {
-				fmt.Printf("    + %s\n", m)
+				logf("    + %s\n", m)
 			}
 		}
 		if len(missing) > 0 {
 			hasChanges = true
 			sort.Strings(missing)
-			fmt.Printf("  MISSING from API (%d):\n", len(missing))
+			logf("  MISSING from API (%d):\n", len(missing))
 			for _, m := range missing {
-				fmt.Printf("    - %s\n", m)
+				logf("    - %s\n", m)
 			}
 		}
 		if len(newModels) == 0 && len(missing) == 0 {
-			fmt.Printf("  OK: in sync\n")
+			logf("  OK: in sync\n")
 		}
-		fmt.Println()
+		logf("\n")
 	}
 
 	// Providers without direct model-listing APIs — just note them.
-	fmt.Println("[Meta] SKIP: no direct API (models are provider-hosted)")
-	fmt.Println("[Amazon] SKIP: no public model-listing API (check AWS Bedrock console)")
-	fmt.Println("[Cohere] SKIP: no public model-listing API (check docs.cohere.com)")
-	fmt.Println("[Perplexity] SKIP: no public model-listing API (check docs.perplexity.ai)")
-	fmt.Println("[AI21] SKIP: no public model-listing API (check docs.ai21.com)")
+	logf("[Meta] SKIP: no direct API (models are provider-hosted)\n")
+	logf("[Amazon] SKIP: no public model-listing API (check AWS Bedrock console)\n")
+	logf("[Cohere] SKIP: no public model-listing API (check docs.cohere.com)\n")
+	logf("[Perplexity] SKIP: no public model-listing API (check docs.perplexity.ai)\n")
+	logf("[AI21] SKIP: no public model-listing API (check docs.ai21.com)\n")
 
-	fmt.Println("\n=== Summary ===")
-	if hasErrors {
-		fmt.Println("WARNING: Some providers failed to respond (see errors above).")
-	}
+	logf("\n=== Summary ===\n")
 	if hasChanges {
-		fmt.Println("Changes detected. Review the output above.")
+		if hasErrors {
+			logf("WARNING: Some providers failed to respond (see errors above).\n")
+		}
+		logf("Changes detected. Review the output above.\n")
+		createGitHubIssue(ctx, client, report.String())
+		os.Exit(1)
+	} else if hasErrors {
+		logf("No model changes detected, but some providers could not be checked.\n")
 		os.Exit(1)
 	}
-	if hasErrors {
-		fmt.Println("No model changes detected, but some providers could not be checked.")
-		os.Exit(1)
-	}
-	fmt.Println("All tracked providers are in sync.")
+	logf("All tracked providers are in sync.\n")
 	os.Exit(0)
 }
 
@@ -289,6 +299,88 @@ func fetchModels(ctx context.Context, client *http.Client, name string, p Provid
 	}
 
 	return ids, nil
+}
+
+// createGitHubIssue creates a GitHub issue with the update report.
+// Requires GITHUB_TOKEN and GITHUB_REPO (e.g. "owner/repo") environment variables.
+// If either is unset, it silently skips (allowing standalone CLI usage).
+func createGitHubIssue(ctx context.Context, client *http.Client, reportBody string) {
+	token := os.Getenv("GITHUB_TOKEN")
+	repo := os.Getenv("GITHUB_REPO")
+	if token == "" || repo == "" {
+		return
+	}
+
+	today := time.Now().Format("2006-01-02")
+	title := "Model Update Detected - " + today
+
+	// Check for existing open issue with the same title to avoid duplicates.
+	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=%s+repo:%s+state:open+label:auto-update",
+		strings.ReplaceAll(title, " ", "+"), repo)
+	searchReq, err := http.NewRequestWithContext(ctx, http.MethodGet, searchURL, nil)
+	if err != nil {
+		fmt.Printf("[GitHub] failed to create search request: %v\n", err)
+		return
+	}
+	searchReq.Header.Set("Authorization", "Bearer "+token)
+	searchReq.Header.Set("Accept", "application/vnd.github+json")
+
+	searchResp, err := client.Do(searchReq)
+	if err != nil {
+		fmt.Printf("[GitHub] failed to search issues: %v\n", err)
+		return
+	}
+	defer searchResp.Body.Close()
+
+	if searchResp.StatusCode == http.StatusOK {
+		var searchResult struct {
+			TotalCount int `json:"total_count"`
+		}
+		if err := json.NewDecoder(searchResp.Body).Decode(&searchResult); err == nil && searchResult.TotalCount > 0 {
+			fmt.Printf("[GitHub] Issue already exists for today, skipping.\n")
+			return
+		}
+	}
+
+	// Create the issue.
+	issueURL := fmt.Sprintf("https://api.github.com/repos/%s/issues", repo)
+	body := map[string]any{
+		"title":  title,
+		"body":   "```\n" + reportBody + "\n```",
+		"labels": []string{"auto-update"},
+	}
+	bodyJSON, err := json.Marshal(body)
+	if err != nil {
+		fmt.Printf("[GitHub] failed to marshal issue body: %v\n", err)
+		return
+	}
+
+	issueReq, err := http.NewRequestWithContext(ctx, http.MethodPost, issueURL, bytes.NewReader(bodyJSON))
+	if err != nil {
+		fmt.Printf("[GitHub] failed to create issue request: %v\n", err)
+		return
+	}
+	issueReq.Header.Set("Authorization", "Bearer "+token)
+	issueReq.Header.Set("Accept", "application/vnd.github+json")
+	issueReq.Header.Set("Content-Type", "application/json")
+
+	issueResp, err := client.Do(issueReq)
+	if err != nil {
+		fmt.Printf("[GitHub] failed to create issue: %v\n", err)
+		return
+	}
+	defer issueResp.Body.Close()
+
+	if issueResp.StatusCode == http.StatusCreated {
+		var created struct {
+			HTMLURL string `json:"html_url"`
+		}
+		json.NewDecoder(issueResp.Body).Decode(&created)
+		fmt.Printf("[GitHub] Issue created: %s\n", created.HTMLURL)
+	} else {
+		respBody, _ := io.ReadAll(io.LimitReader(issueResp.Body, 512))
+		fmt.Printf("[GitHub] Failed to create issue (HTTP %d): %s\n", issueResp.StatusCode, string(respBody))
+	}
 }
 
 // diff compares our known models against API results.

@@ -1,0 +1,23 @@
+# Railway configuration for the auto-update cron service.
+#
+# Setup: In your Railway project, create a second service pointing to this repo.
+# Then set its config file path to "configs/railway-updater.toml" in the service
+# settings, or copy this file to railway.toml in the service's root directory.
+#
+# Required environment variables (set in Railway dashboard):
+#   OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY,
+#   MISTRAL_API_KEY, XAI_API_KEY, DEEPSEEK_API_KEY
+#
+# Optional (for automatic GitHub issue creation):
+#   GITHUB_TOKEN  - GitHub personal access token with repo scope
+#   GITHUB_REPO   - Repository in "owner/repo" format (e.g. "aezizhu/universal-model-registry")
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.updater"
+
+[deploy]
+# Daily at 3:00 AM UTC = 7:00 PM San Francisco time (PST).
+# During daylight saving (PDT), this runs at 8:00 PM SF time.
+cronSchedule = "0 3 * * *"
+restartPolicyType = "NEVER"
