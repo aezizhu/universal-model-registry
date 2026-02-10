@@ -30,7 +30,7 @@ Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses.
 > claude plugin add -- https://github.com/aezizhu/universal-model-registry.git
 > ```
 >
-> Claude Code gets **6 tools** + a smart lookup skill that automatically verifies model IDs before writing code.
+> Claude Code gets **6 tools** + a smart lookup skill that **automatically verifies model IDs** before writing code or answering any question about AI models.
 
 ### Alternative: Direct MCP Connection
 
@@ -120,7 +120,7 @@ Your AI agent gets these 6 tools:
 
 ---
 
-## How It Helps Your Coding Agent
+## How It Helps Your AI Agent
 
 **Scenario 1: Writing an API call**
 
@@ -158,7 +158,16 @@ response = client.chat.completions.create(
 )
 ```
 
-**Scenario 4: Comparing options**
+**Scenario 4: Answering model questions (not just code)**
+
+```
+# You: "What's the latest Gemini model?"
+# Agent calls: list_models(provider="Google", status="current")
+# Agent responds with verified info: "The latest is Gemini 3 Pro (gemini-3-pro-preview),
+#   released January 2026. There's also Gemini 3 Flash for faster/cheaper use."
+```
+
+**Scenario 5: Comparing options**
 
 ```python
 # You: "Should I use Claude or GPT for this?"
