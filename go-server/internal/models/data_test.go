@@ -88,8 +88,8 @@ func TestAtLeastThreeProviders(t *testing.T) {
 }
 
 func TestTotalModelCount(t *testing.T) {
-	if len(Models) != 64 {
-		t.Errorf("expected 64 models, got %d", len(Models))
+	if len(Models) != 75 {
+		t.Errorf("expected 75 models, got %d", len(Models))
 	}
 }
 
@@ -100,12 +100,12 @@ func TestProviderCounts(t *testing.T) {
 	}
 
 	expected := map[string]int{
-		"OpenAI":     16,
+		"OpenAI":     19,
 		"Anthropic":  8,
-		"Google":     6,
-		"xAI":       6,
+		"Google":     8,
+		"xAI":       7,
 		"Meta":      3,
-		"Mistral":   6,
+		"Mistral":   11,
 		"DeepSeek":  4,
 		"Amazon":    6,
 		"Cohere":    4,

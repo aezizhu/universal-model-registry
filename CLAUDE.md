@@ -1,6 +1,6 @@
 # Model ID Cheatsheet
 
-MCP server exposing a curated, static registry of 64 AI models across 11 providers. Built in Go with the official MCP SDK.
+MCP server exposing a curated, static registry of 75 AI models across 11 providers. Built in Go with the official MCP SDK.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Go server using `github.com/modelcontextprotocol/go-sdk` v1.3.0. Model data live
 | File | Purpose |
 |------|---------|
 | `go-server/cmd/server/main.go` | Entry point — registers tools, resources, starts transport |
-| `go-server/internal/models/data.go` | `Models` map with all 64 model entries |
+| `go-server/internal/models/data.go` | `Models` map with all 75 model entries |
 | `go-server/internal/models/models.go` | `Model` struct definition |
 | `go-server/internal/tools/*.go` | 6 tool handlers + shared helpers |
 | `go-server/internal/resources/resources.go` | 3 resource handlers |

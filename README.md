@@ -1,12 +1,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev)
-[![Models](https://img.shields.io/badge/Models-64-blueviolet)](https://github.com/aezizhu/universal-model-registry)
+[![Models](https://img.shields.io/badge/Models-75-blueviolet)](https://github.com/aezizhu/universal-model-registry)
 [![Providers](https://img.shields.io/badge/Providers-11-orange)](https://github.com/aezizhu/universal-model-registry)
 [![Tests](https://img.shields.io/badge/Tests-116%20passing-brightgreen)](https://github.com/aezizhu/universal-model-registry)
 
 # Model ID Cheatsheet
 
-**Stop your AI coding agent from hallucinating outdated model names.** This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **64 models across 11 providers**.
+**Stop your AI coding agent from hallucinating outdated model names.** This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **75 models across 11 providers**.
 
 Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses. Auto-updated daily.
 
@@ -168,35 +168,35 @@ response = client.chat.completions.create(
 
 ---
 
-## Covered Models (64 total)
+## Covered Models (75 total)
 
-### Current Models (49)
+### Current Models (57)
 
 | Provider | Models | API IDs |
 |----------|--------|---------|
-| **OpenAI** (12) | GPT-5.2, GPT-5.2 Codex, GPT-5.2 Pro, GPT-5.1, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o3 Pro, o4-mini | `gpt-5.2`, `gpt-5.2-codex`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o3-pro`, `o4-mini` |
+| **OpenAI** (15) | GPT-5.2, GPT-5.2 Codex, GPT-5.2 Pro, GPT-5.1, GPT-5.1 Codex, GPT-5.1 Codex Mini, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o3 Pro, o3 Deep Research, o4-mini | `gpt-5.2`, `gpt-5.2-codex`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o3-pro`, `o3-deep-research`, `o4-mini` |
 | **Anthropic** (3) | Claude Opus 4.6, Sonnet 4.5, Haiku 4.5 | `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
-| **Google** (5) | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
-| **xAI** (4) | Grok 4, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
+| **Google** (6) | Gemini 3 Pro, Gemini 3 Pro Image, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-pro-image-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
+| **xAI** (5) | Grok 4, Grok 4.1, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
 | **Meta** (2) | Llama 4 Maverick, Llama 4 Scout | `llama-4-maverick`, `llama-4-scout` |
-| **Mistral** (5) | Mistral Large 3, Mistral Medium 3, Mistral Small 3.2, Devstral 2, Devstral Small 2 | `mistral-large-2512`, `mistral-medium-2505`, `mistral-small-2506`, `devstral-2512`, `devstral-small-2512` |
-| **DeepSeek** (3) | DeepSeek Reasoner, DeepSeek Chat, DeepSeek R1 | `deepseek-reasoner`, `deepseek-chat`, `deepseek-r1` |
+| **Mistral** (10) | Mistral Large 3, Mistral Medium 3, Mistral Small 3.2, Ministral 3B, Ministral 8B, Ministral 14B, Magistral Small 1.2, Magistral Medium 1.2, Devstral 2, Devstral Small 2 | `mistral-large-2512`, `mistral-medium-2505`, `mistral-small-2506`, `ministral-3b-2512`, `ministral-8b-2512`, `ministral-14b-2512`, `magistral-small-2509`, `magistral-medium-2509`, `devstral-2512`, `devstral-small-2512` |
+| **DeepSeek** (2) | DeepSeek Reasoner, DeepSeek Chat | `deepseek-reasoner`, `deepseek-chat` |
 | **Amazon** (6) | Nova Micro, Nova Lite, Nova Pro, Nova Premier, Nova 2 Lite, Nova 2 Pro | `amazon-nova-micro`, `amazon-nova-lite`, `amazon-nova-pro`, `amazon-nova-premier`, `amazon-nova-2-lite`, `amazon-nova-2-pro` |
 | **Cohere** (4) | Command A, Command A Reasoning, Command A Vision, Command R7B | `command-a-03-2025`, `command-a-reasoning-08-2025`, `command-a-vision-07-2025`, `command-r7b-12-2024` |
 | **Perplexity** (3) | Sonar, Sonar Pro, Sonar Reasoning Pro | `sonar`, `sonar-pro`, `sonar-reasoning-pro` |
 | **AI21** (2) | Jamba Large 1.7, Jamba Mini 1.7 | `jamba-large-1.7`, `jamba-mini-1.7` |
 
-### Legacy & Deprecated Models (15)
+### Legacy & Deprecated Models (18)
 
 Also tracked so your agent can detect outdated model IDs and suggest replacements:
 
 - OpenAI: `o3-mini` (legacy), `gpt-4.1` (legacy), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
 - Anthropic: `claude-opus-4-5` (legacy), `claude-opus-4-1` (legacy), `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
-- Google: `gemini-2.0-flash` (deprecated)
+- Google: `gemini-2.0-flash-lite` (deprecated), `gemini-2.0-flash` (deprecated)
 - xAI: `grok-3` (legacy), `grok-3-mini` (legacy)
 - Meta: `llama-3.3-70b` (legacy)
 - Mistral: `codestral-2508` (legacy)
-- DeepSeek: `deepseek-v3` (deprecated)
+- DeepSeek: `deepseek-r1` (legacy), `deepseek-v3` (deprecated)
 
 ---
 
