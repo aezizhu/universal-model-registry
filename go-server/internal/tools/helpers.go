@@ -13,7 +13,8 @@ func newestPerProvider(ms []models.Model) map[string]bool {
 	best := make(map[string]string)   // provider -> best release date
 	bestID := make(map[string]string) // provider -> model ID with best date
 	for _, m := range ms {
-		if m.ReleaseDate > best[m.Provider] {
+		if m.ReleaseDate > best[m.Provider] ||
+			(m.ReleaseDate == best[m.Provider] && m.ID < bestID[m.Provider]) {
 			best[m.Provider] = m.ReleaseDate
 			bestID[m.Provider] = m.ID
 		}
@@ -179,6 +180,10 @@ func SuggestModels(input string, n int) []string {
 // FindModel finds a model by exact match, alias, case-insensitive, or partial match.
 // Partial matching is deterministic: shortest ID first, then alphabetically.
 func FindModel(modelID string) (models.Model, bool) {
+	if modelID == "" {
+		return models.Model{}, false
+	}
+
 	// Exact match
 	if m, ok := models.Models[modelID]; ok {
 		return m, true

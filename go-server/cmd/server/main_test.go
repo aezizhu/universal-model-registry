@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"go-server/internal/models"
 )
 
 func TestNewServerReturnsDistinctInstances(t *testing.T) {
@@ -109,7 +112,7 @@ func TestConcurrentSSESessions(t *testing.T) {
 	}
 }
 
-// newTestMux builds the same mux as serveHTTP: /health + SSE handler.
+// newTestMux builds the same mux as serveHTTP: /health (JSON) + SSE handler.
 func newTestMux() *http.ServeMux {
 	sseHandler := mcp.NewSSEHandler(func(_ *http.Request) *mcp.Server {
 		return newServer()
@@ -117,8 +120,12 @@ func newTestMux() *http.ServeMux {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, "ok\n")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"status":  "ok",
+			"models":  len(models.Models),
+			"version": "1.0.1",
+		})
 	})
 	mux.Handle("/", sseHandler)
 	return mux
@@ -138,12 +145,29 @@ func TestHealthEndpoint(t *testing.T) {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)
 	}
 
+	ct := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/json") {
+		t.Errorf("expected Content-Type application/json, got %q", ct)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("reading body: %v", err)
 	}
-	if got := strings.TrimSpace(string(body)); got != "ok" {
-		t.Errorf("expected body %q, got %q", "ok", got)
+
+	var health map[string]any
+	if err := json.Unmarshal(body, &health); err != nil {
+		t.Fatalf("health response is not valid JSON: %v", err)
+	}
+
+	if health["status"] != "ok" {
+		t.Errorf("expected status 'ok', got %v", health["status"])
+	}
+	if health["version"] != "1.0.1" {
+		t.Errorf("expected version '1.0.1', got %v", health["version"])
+	}
+	if int(health["models"].(float64)) != len(models.Models) {
+		t.Errorf("expected models %d, got %v", len(models.Models), health["models"])
 	}
 }
 

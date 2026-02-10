@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -260,9 +261,13 @@ func serveHTTP(label string, handler http.Handler) {
 }
 
 // truncate limits string length to prevent abuse from oversized inputs.
+// Backs up to a valid UTF-8 boundary to avoid splitting multi-byte characters.
 func truncate(s string, maxLen int) string {
-	if len(s) > maxLen {
-		return s[:maxLen]
+	if len(s) <= maxLen {
+		return s
 	}
-	return s
+	for maxLen > 0 && !utf8.RuneStart(s[maxLen]) {
+		maxLen--
+	}
+	return s[:maxLen]
 }

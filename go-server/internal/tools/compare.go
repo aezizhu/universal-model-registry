@@ -42,10 +42,6 @@ func CompareModels(modelIDs []string) string {
 		return fmt.Sprintf("Model(s) not found: %s", strings.Join(parts, "; "))
 	}
 
-	if len(found) < 2 {
-		return "Need at least 2 valid models to compare."
-	}
-
 	// Build comparison table — fields as rows, models as columns
 	names := make([]string, len(found))
 	for i, m := range found {

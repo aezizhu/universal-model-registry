@@ -9,6 +9,9 @@ import (
 
 // SearchModels searches for models by keyword across names, providers, and notes.
 func SearchModels(query string) string {
+	if query == "" {
+		return "Please provide a search term."
+	}
 	q := strings.ToLower(query)
 	var matches []models.Model
 	for _, m := range models.Models {
