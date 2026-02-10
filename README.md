@@ -15,7 +15,7 @@ When you ask an AI coding agent to "use the latest OpenAI model", it might gener
 ### Claude Code Plugin
 
 ```bash
-/plugin marketplace add aezizhu/universal-model-registry
+/plugin marketplace add https://github.com/aezizhu/universal-model-registry.git
 /plugin install model-id-cheatsheet
 ```
 
