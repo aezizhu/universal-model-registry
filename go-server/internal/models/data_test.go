@@ -174,6 +174,39 @@ func TestNoDuplicateDisplayNames(t *testing.T) {
 	}
 }
 
+func TestAliasesPointToValidModels(t *testing.T) {
+	for alias, target := range Aliases {
+		if _, ok := Models[target]; !ok {
+			t.Errorf("alias %q points to non-existent model %q", alias, target)
+		}
+	}
+}
+
+func TestFormatInt(t *testing.T) {
+	tests := []struct {
+		input int
+		want  string
+	}{
+		{0, "0"},
+		{1, "1"},
+		{999, "999"},
+		{1000, "1,000"},
+		{1234, "1,234"},
+		{100000, "100,000"},
+		{1000000, "1,000,000"},
+		{10000000, "10,000,000"},
+		{-1, "-1"},
+		{-1000, "-1,000"},
+		{-1234567, "-1,234,567"},
+	}
+	for _, tt := range tests {
+		got := FormatInt(tt.input)
+		if got != tt.want {
+			t.Errorf("FormatInt(%d) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestEveryProviderHasAtLeastOneCurrentModel(t *testing.T) {
 	providers := make(map[string]bool)
 	currentProviders := make(map[string]bool)

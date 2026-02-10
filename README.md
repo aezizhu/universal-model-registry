@@ -2,7 +2,7 @@
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Models](https://img.shields.io/badge/Models-64-blueviolet)](https://github.com/aezizhu/universal-model-registry)
 [![Providers](https://img.shields.io/badge/Providers-11-orange)](https://github.com/aezizhu/universal-model-registry)
-[![Tests](https://img.shields.io/badge/Tests-114%20passing-brightgreen)](https://github.com/aezizhu/universal-model-registry)
+[![Tests](https://img.shields.io/badge/Tests-116%20passing-brightgreen)](https://github.com/aezizhu/universal-model-registry)
 
 # Model ID Cheatsheet
 
@@ -303,7 +303,7 @@ Model data is automatically checked **daily at 7 PM Pacific Time** via a Railway
 - **MCP SDK**: `github.com/modelcontextprotocol/go-sdk` v1.3.0 (official)
 - **Transports**: stdio, SSE, Streamable HTTP
 - **Binary size**: ~10MB
-- **Tests**: 114 unit tests
+- **Tests**: 116 unit tests
 - **Security**: Per-IP rate limiting, connection limits, input sanitization
 - **Deploy**: Docker (alpine), Railway
 
