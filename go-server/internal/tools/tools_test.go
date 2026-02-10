@@ -472,9 +472,9 @@ func TestGetModelInfo_EmptyString(t *testing.T) {
 
 func TestSearchModels_EmptyString(t *testing.T) {
 	result := SearchModels("")
-	// Empty query should match all models
-	if strings.Contains(result, "No models found") {
-		t.Error("empty search should match all models")
+	// Empty query should return an error message prompting for a search term
+	if !strings.Contains(result, "Please provide a search term") {
+		t.Errorf("expected 'Please provide a search term' for empty query, got: %s", result)
 	}
 }
 

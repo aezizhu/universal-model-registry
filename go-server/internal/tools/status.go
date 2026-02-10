@@ -35,10 +35,14 @@ func CheckModelStatus(modelID string) string {
 				replacements = append(replacements, r)
 			}
 		}
-		// Sort by closest pricing to the original model
+		// Sort by closest pricing to the original model, then by ID for determinism
 		sort.SliceStable(replacements, func(i, j int) bool {
-			return math.Abs(replacements[i].PricingInput-m.PricingInput) <
-				math.Abs(replacements[j].PricingInput-m.PricingInput)
+			di := math.Abs(replacements[i].PricingInput - m.PricingInput)
+			dj := math.Abs(replacements[j].PricingInput - m.PricingInput)
+			if di != dj {
+				return di < dj
+			}
+			return replacements[i].ID < replacements[j].ID
 		})
 		if len(replacements) > 0 {
 			r := replacements[0]
