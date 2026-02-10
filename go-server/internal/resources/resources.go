@@ -55,31 +55,8 @@ func PricingSummary() string {
 	for _, m := range current {
 		rows = append(rows, fmt.Sprintf(
 			"| %s | %s | $%.2f | $%.2f | %s |",
-			m.ID, m.Provider, m.PricingInput, m.PricingOutput, formatInt(m.ContextWindow),
+			m.ID, m.Provider, m.PricingInput, m.PricingOutput, models.FormatInt(m.ContextWindow),
 		))
 	}
 	return strings.Join(rows, "\n")
-}
-
-// formatInt formats an integer with comma separators.
-func formatInt(n int) string {
-	if n < 1000 {
-		return fmt.Sprintf("%d", n)
-	}
-	s := fmt.Sprintf("%d", n)
-	var result strings.Builder
-	remainder := len(s) % 3
-	if remainder > 0 {
-		result.WriteString(s[:remainder])
-		if len(s) > remainder {
-			result.WriteString(",")
-		}
-	}
-	for i := remainder; i < len(s); i += 3 {
-		if i > remainder {
-			result.WriteString(",")
-		}
-		result.WriteString(s[i : i+3])
-	}
-	return result.String()
 }

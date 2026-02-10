@@ -1,42 +1,49 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Models](https://img.shields.io/badge/Models-46-blueviolet)](https://github.com/aezizhu/universal-model-registry)
+[![Providers](https://img.shields.io/badge/Providers-7-orange)](https://github.com/aezizhu/universal-model-registry)
+[![Tests](https://img.shields.io/badge/Tests-96%20passing-brightgreen)](https://github.com/aezizhu/universal-model-registry)
+
 # Model ID Cheatsheet
 
-Stop your AI coding agent from hallucinating outdated model names. This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **46 models across 7 providers**.
+**Stop your AI coding agent from hallucinating outdated model names.** This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **46 models across 7 providers**.
 
-Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses. Auto-updated weekly.
+Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses. Auto-updated daily.
 
-## Why?
-
-When you ask an AI coding agent to "use the latest OpenAI model", it might generate `gpt-4-turbo` (deprecated) instead of `gpt-5.2` (current). This plugin solves that by giving your agent a tool it can call to look up the correct model ID before writing code.
-
-**Example:** Your agent needs to write an API call. Instead of guessing, it calls `get_model_info("gpt-5.2")` and gets back the exact API model ID, pricing, context window, and capabilities — verified against official docs.
-
-## Install as Plugin (Recommended)
-
-### Claude Code Plugin
-
-```bash
-/plugin marketplace add https://github.com/aezizhu/universal-model-registry.git
-/plugin install model-id-cheatsheet
+```diff
+- model = "gpt-4-turbo"           # Hallucinated — doesn't exist anymore
++ model = "gpt-5.2"               # Correct — verified against official docs
 ```
 
-That's it. Claude Code gets 6 tools + a smart lookup skill that automatically verifies model IDs before writing code.
+```diff
+- model = "claude-3-opus-20240229" # Deprecated
++ model = "claude-opus-4-6"        # Current — latest Anthropic flagship
+```
 
-## Alternative: Direct MCP Connection
+---
 
-If you prefer to connect directly to the MCP server without the plugin:
+## Quick Start
 
-### Claude Code (one command)
+> **Claude Code Plugin** (recommended — one command, done)
+>
+> ```bash
+> claude plugin add -- https://github.com/aezizhu/universal-model-registry.git
+> ```
+>
+> Claude Code gets **6 tools** + a smart lookup skill that automatically verifies model IDs before writing code.
+
+### Alternative: Direct MCP Connection
+
+Connect any MCP-compatible client to the hosted server — no API key, no auth:
+
+**Claude Code:**
 
 ```bash
 claude mcp add --transport sse --scope user model-id-cheatsheet \
   https://universal-model-registry-production.up.railway.app/sse
 ```
 
-Claude Code can now call `list_models`, `get_model_info`, `recommend_model`, etc.
-
-### Cursor
-
-Add to `~/.cursor/mcp.json`:
+**Cursor** — add to `~/.cursor/mcp.json`:
 
 ```json
 {
@@ -48,9 +55,7 @@ Add to `~/.cursor/mcp.json`:
 }
 ```
 
-### Windsurf
-
-Add to your Windsurf MCP config (Settings > MCP Servers):
+**Windsurf** — add to Settings > MCP Servers:
 
 ```json
 {
@@ -62,9 +67,7 @@ Add to your Windsurf MCP config (Settings > MCP Servers):
 }
 ```
 
-### Codex CLI
-
-Add to `~/.codex/config.toml`:
+**Codex CLI** — add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.model-id-cheatsheet]
@@ -72,9 +75,7 @@ command = "uvx"
 args = ["mcp-proxy", "--transport", "sse", "https://universal-model-registry-production.up.railway.app/sse"]
 ```
 
-### OpenCode
-
-Add to `~/.config/opencode/opencode.json`:
+**OpenCode** — add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
@@ -88,17 +89,115 @@ Add to `~/.config/opencode/opencode.json`:
 }
 ```
 
-### Any MCP Client (Generic)
-
-Connect to the SSE endpoint:
+**Any MCP Client** — connect to the SSE endpoint directly:
 
 ```
 https://universal-model-registry-production.up.railway.app/sse
 ```
 
-No API key needed. No auth. Just point your MCP client at that URL.
+---
 
-## Self-Hosting
+## Available Tools
+
+Your AI agent gets these 6 tools:
+
+| Tool | What It Does | Example Use |
+|------|-------------|-------------|
+| `get_model_info(model_id)` | Get exact API ID, pricing, context window, capabilities | "What's the model ID for Claude Sonnet?" |
+| `list_models(provider?, status?, capability?)` | Browse models with filters | "Show me all current Google models" |
+| `recommend_model(task, budget?)` | Get ranked recommendations for a task | "Best model for coding, cheap budget" |
+| `check_model_status(model_id)` | Is this model current, legacy, or deprecated? | "Is gpt-4o still available?" |
+| `compare_models(model_ids)` | Side-by-side comparison table | "Compare gpt-5.2 vs claude-opus-4-6" |
+| `search_models(query)` | Free-text search across all fields | "Search for reasoning models" |
+
+### Resources
+
+| URI | Description |
+|-----|-------------|
+| `model://registry/all` | Full JSON dump of all 46 models |
+| `model://registry/current` | Only current (non-deprecated) models as JSON |
+| `model://registry/pricing` | Pricing table sorted cheapest-first (markdown) |
+
+---
+
+## How It Helps Your Coding Agent
+
+**Scenario 1: Writing an API call**
+
+```python
+# You: "Call the OpenAI API with their best coding model"
+# Agent calls: get_model_info("gpt-5.2-codex")
+# Agent writes:
+response = client.chat.completions.create(
+    model="gpt-5.2-codex",  # Correct! Verified via model registry
+    messages=[...]
+)
+```
+
+**Scenario 2: Catching deprecated models**
+
+```python
+# You: "Use gpt-4o for this task"
+# Agent calls: check_model_status("gpt-4o")
+# Agent responds: "gpt-4o is deprecated (retiring Feb 13, 2026). I'll use gpt-5 instead."
+response = client.chat.completions.create(
+    model="gpt-5",  # Updated automatically
+    messages=[...]
+)
+```
+
+**Scenario 3: Finding the cheapest option**
+
+```python
+# You: "Use the cheapest model that supports vision"
+# Agent calls: list_models(capability="vision", status="current")
+# Agent picks: gpt-5-nano at $0.05/$0.40 per 1M tokens
+response = client.chat.completions.create(
+    model="gpt-5-nano",  # Cheapest vision model
+    messages=[...]
+)
+```
+
+**Scenario 4: Comparing options**
+
+```python
+# You: "Should I use Claude or GPT for this?"
+# Agent calls: compare_models(["claude-opus-4-6", "gpt-5.2"])
+# Agent gets: Side-by-side table of pricing, context, capabilities
+```
+
+---
+
+## Covered Models (46 total)
+
+### Current Models (32)
+
+| Provider | Models | API IDs |
+|----------|--------|---------|
+| **OpenAI** (13) | GPT-5.2, GPT-5.2 Codex, GPT-5.2 Pro, GPT-5.1, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o3 Pro, o4-mini, o3-mini | `gpt-5.2`, `gpt-5.2-codex`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o3-pro`, `o4-mini`, `o3-mini` |
+| **Anthropic** (3) | Claude Opus 4.6, Sonnet 4.5, Haiku 4.5 | `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
+| **Google** (5) | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
+| **xAI** (4) | Grok 4, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
+| **Meta** (2) | Llama 4 Maverick, Llama 4 Scout | `llama-4-maverick`, `llama-4-scout` |
+| **Mistral** (3) | Mistral Large 3, Mistral Small 3.2, Devstral 2 | `mistral-large-2512`, `mistral-small-2506`, `devstral-2512` |
+| **DeepSeek** (2) | DeepSeek Reasoner, DeepSeek Chat | `deepseek-reasoner`, `deepseek-chat` |
+
+### Legacy & Deprecated Models (14)
+
+Also tracked so your agent can detect outdated model IDs and suggest replacements:
+
+- OpenAI: `gpt-4.1` (legacy), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
+- Anthropic: `claude-opus-4-5` (legacy), `claude-opus-4-1` (legacy), `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
+- Google: `gemini-2.0-flash` (deprecated)
+- xAI: `grok-3` (legacy), `grok-3-mini` (legacy)
+- Meta: `llama-3.3-70b` (legacy)
+- Mistral: `codestral-2508` (legacy)
+- DeepSeek: `deepseek-v3` (deprecated)
+
+---
+
+<details>
+<summary><strong>Self-Hosting</strong></summary>
 
 If you prefer to run your own instance instead of using the hosted one:
 
@@ -141,7 +240,10 @@ railway init
 railway up
 ```
 
-### Local MCP Config (self-hosted)
+</details>
+
+<details>
+<summary><strong>Local MCP Config (self-hosted)</strong></summary>
 
 For Claude Code connecting to a local instance:
 
@@ -162,82 +264,9 @@ For Cursor (local):
 }
 ```
 
-## Available Tools
+</details>
 
-Your AI agent gets these 6 tools:
-
-| Tool | What It Does | Example Use |
-|------|-------------|-------------|
-| `get_model_info(model_id)` | Get exact API ID, pricing, context window, capabilities | "What's the model ID for Claude Sonnet?" |
-| `list_models(provider?, status?, capability?)` | Browse models with filters | "Show me all current Google models" |
-| `recommend_model(task, budget?)` | Get ranked recommendations for a task | "Best model for coding, cheap budget" |
-| `check_model_status(model_id)` | Is this model current, legacy, or deprecated? | "Is gpt-4o still available?" |
-| `compare_models(model_ids)` | Side-by-side comparison table | "Compare gpt-5.2 vs claude-opus-4-6" |
-| `search_models(query)` | Free-text search across all fields | "Search for reasoning models" |
-
-## Resources
-
-| URI | Description |
-|-----|-------------|
-| `model://registry/all` | Full JSON dump of all 46 models |
-| `model://registry/current` | Only current (non-deprecated) models as JSON |
-| `model://registry/pricing` | Pricing table sorted cheapest-first (markdown) |
-
-## Covered Models (46 total)
-
-### Current Models (32)
-
-| Provider | Models | API IDs |
-|----------|--------|---------|
-| **OpenAI** (13) | GPT-5.2, GPT-5.2 Codex, GPT-5.2 Pro, GPT-5.1, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o3 Pro, o4-mini, o3-mini | `gpt-5.2`, `gpt-5.2-codex`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o3-pro`, `o4-mini`, `o3-mini` |
-| **Anthropic** (3) | Claude Opus 4.6, Sonnet 4.5, Haiku 4.5 | `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
-| **Google** (5) | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
-| **xAI** (4) | Grok 4, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
-| **Meta** (2) | Llama 4 Maverick, Llama 4 Scout | `llama-4-maverick`, `llama-4-scout` |
-| **Mistral** (3) | Mistral Large 3, Mistral Small 3.2, Devstral 2 | `mistral-large-2512`, `mistral-small-2506`, `devstral-2512` |
-| **DeepSeek** (2) | DeepSeek Reasoner, DeepSeek Chat | `deepseek-reasoner`, `deepseek-chat` |
-
-### Legacy & Deprecated Models (14)
-
-Also tracked so your agent can detect outdated model IDs and suggest replacements:
-
-- OpenAI: `gpt-4.1` (legacy), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
-- Anthropic: `claude-opus-4-5` (legacy), `claude-opus-4-1` (legacy), `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
-- Google: `gemini-2.0-flash` (deprecated)
-- xAI: `grok-3` (legacy), `grok-3-mini` (legacy)
-- Meta: `llama-3.3-70b` (legacy)
-- Mistral: `codestral-2508` (legacy)
-- DeepSeek: `deepseek-v3` (deprecated)
-
-## How It Helps Your Coding Agent
-
-**Scenario 1: Writing an API call**
-```
-You: "Call the OpenAI API with their best coding model"
-Agent calls: get_model_info("gpt-5.2-codex")
-Agent writes: model="gpt-5.2-codex"  # Correct!
-```
-
-**Scenario 2: Checking if a model is still valid**
-```
-You: "Use gpt-4o for this task"
-Agent calls: check_model_status("gpt-4o")
-Agent responds: "gpt-4o is deprecated (retiring Feb 13, 2026). I'll use gpt-5 instead."
-```
-
-**Scenario 3: Finding the cheapest option**
-```
-You: "Use the cheapest model that supports vision"
-Agent calls: list_models(capability="vision", status="current")
-Agent picks: gpt-5-nano at $0.05/$0.40 per 1M tokens
-```
-
-**Scenario 4: Comparing options**
-```
-You: "Should I use Claude or GPT for this?"
-Agent calls: compare_models(["claude-opus-4-6", "gpt-5.2"])
-Agent gets: Side-by-side table of pricing, context, capabilities
-```
+---
 
 ## Security
 
@@ -253,7 +282,7 @@ Agent gets: Side-by-side table of pricing, context, capabilities
 
 ## Staying Up to Date
 
-Model data is automatically checked every Monday via a GitHub Actions workflow. The updater queries each provider's API to detect new models, deprecations, or pricing changes, and opens a GitHub issue if updates are needed. You can also trigger it manually via `workflow_dispatch`.
+Model data is automatically checked daily at 7 PM Pacific Time via a GitHub Actions workflow. The updater queries each provider's API to detect new models, deprecations, or pricing changes, and opens a GitHub issue if updates are needed. You can also trigger it manually via `workflow_dispatch`.
 
 ## Tech Stack
 
@@ -267,12 +296,18 @@ Model data is automatically checked every Monday via a GitHub Actions workflow. 
 
 ## Contributing
 
-To add or update a model:
+Contributions are welcome! Whether it's adding a new model, fixing data, or improving the server — here's how to get started:
 
-1. Edit `go-server/internal/models/data.go`
-2. Update test counts in `go-server/internal/models/data_test.go`
-3. Run `cd go-server && go test ./... -v`
-4. Submit a PR
+1. Fork the repo and clone it locally
+2. Edit model data in `go-server/internal/models/data.go`
+3. Update test counts in `go-server/internal/models/data_test.go`
+4. Run the tests:
+   ```bash
+   cd go-server && go test ./... -v
+   ```
+5. Submit a PR — we'll review it quickly
+
+If you spot an outdated model or incorrect pricing, opening an issue is just as helpful.
 
 ## License
 

@@ -74,15 +74,45 @@ var knownModels = map[string]map[string]bool{
 		"grok-3-mini":      true,
 	},
 	"Mistral": {
-		"mistral-large-3-25-12": true,
-		"mistral-small-2506":    true,
-		"devstral-2512":         true,
-		"codestral-2508":        true,
+		"mistral-large-2512":  true,
+		"mistral-medium-2505": true,
+		"mistral-small-2506":  true,
+		"devstral-2512":       true,
+		"devstral-small-2512": true,
+		"codestral-2508":      true,
 	},
 	"DeepSeek": {
 		"deepseek-reasoner": true,
 		"deepseek-chat":     true,
 		"deepseek-v3":       true,
+	},
+	"Meta": {
+		"llama-4-maverick": true,
+		"llama-4-scout":    true,
+		"llama-3.3-70b":    true,
+	},
+	"Amazon": {
+		"amazon-nova-micro":     true,
+		"amazon-nova-lite":      true,
+		"amazon-nova-pro":       true,
+		"amazon-nova-premier":   true,
+		"amazon-nova-2-lite":    true,
+		"amazon-nova-2-pro":     true,
+	},
+	"Cohere": {
+		"command-a-03-2025":            true,
+		"command-a-reasoning-08-2025":  true,
+		"command-a-vision-07-2025":     true,
+		"command-r7b-12-2024":          true,
+	},
+	"Perplexity": {
+		"sonar":                true,
+		"sonar-pro":            true,
+		"sonar-reasoning-pro":  true,
+	},
+	"AI21": {
+		"jamba-large-1.7": true,
+		"jamba-mini-1.7":  true,
 	},
 }
 
@@ -148,8 +178,12 @@ func main() {
 		fmt.Println()
 	}
 
-	// Meta models have no direct API — just note them.
+	// Providers without direct model-listing APIs — just note them.
 	fmt.Println("[Meta] SKIP: no direct API (models are provider-hosted)")
+	fmt.Println("[Amazon] SKIP: no public model-listing API (check AWS Bedrock console)")
+	fmt.Println("[Cohere] SKIP: no public model-listing API (check docs.cohere.com)")
+	fmt.Println("[Perplexity] SKIP: no public model-listing API (check docs.perplexity.ai)")
+	fmt.Println("[AI21] SKIP: no public model-listing API (check docs.ai21.com)")
 
 	fmt.Println("\n=== Summary ===")
 	if hasChanges {

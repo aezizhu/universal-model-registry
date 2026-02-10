@@ -125,9 +125,9 @@ func TestFormatInt_Resources(t *testing.T) {
 		{200000, "200,000"},
 	}
 	for _, tc := range tests {
-		got := formatInt(tc.input)
+		got := models.FormatInt(tc.input)
 		if got != tc.want {
-			t.Errorf("formatInt(%d) = %q, want %q", tc.input, got, tc.want)
+			t.Errorf("FormatInt(%d) = %q, want %q", tc.input, got, tc.want)
 		}
 	}
 }

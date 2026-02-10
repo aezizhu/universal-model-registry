@@ -15,6 +15,7 @@ func SearchModels(query string) string {
 		if strings.Contains(strings.ToLower(m.ID), q) ||
 			strings.Contains(strings.ToLower(m.DisplayName), q) ||
 			strings.Contains(strings.ToLower(m.Provider), q) ||
+			strings.Contains(strings.ToLower(m.Status), q) ||
 			strings.Contains(strings.ToLower(m.Notes), q) {
 			matches = append(matches, m)
 		}

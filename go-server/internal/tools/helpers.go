@@ -57,7 +57,7 @@ func FormatTable(ms []models.Model) string {
 		rows = append(rows, fmt.Sprintf(
 			"| %s | %s | %s | %s | %s | $%.2f | $%.2f |",
 			m.ID, displayName, m.Provider, m.Status,
-			formatInt(m.ContextWindow),
+			models.FormatInt(m.ContextWindow),
 			m.PricingInput, m.PricingOutput,
 		))
 	}
@@ -100,8 +100,8 @@ func ModelDetail(m models.Model) string {
 		m.DisplayName, m.ID,
 		m.Provider,
 		m.Status,
-		formatInt(m.ContextWindow),
-		formatInt(m.MaxOutputTokens),
+		models.FormatInt(m.ContextWindow),
+		models.FormatInt(m.MaxOutputTokens),
 		capsStr,
 		m.PricingInput,
 		m.PricingOutput,
@@ -111,46 +111,107 @@ func ModelDetail(m models.Model) string {
 	)
 }
 
-// formatInt formats an integer with comma separators.
-func formatInt(n int) string {
-	if n < 0 {
-		return "-" + formatInt(-n)
+// levenshteinDistance computes the Levenshtein edit distance between two strings.
+func levenshteinDistance(a, b string) int {
+	la, lb := len(a), len(b)
+	if la == 0 {
+		return lb
 	}
-	if n < 1000 {
-		return fmt.Sprintf("%d", n)
+	if lb == 0 {
+		return la
 	}
 
-	s := fmt.Sprintf("%d", n)
-	var result strings.Builder
-	remainder := len(s) % 3
-	if remainder > 0 {
-		result.WriteString(s[:remainder])
-		if len(s) > remainder {
-			result.WriteString(",")
-		}
+	prev := make([]int, lb+1)
+	curr := make([]int, lb+1)
+	for j := 0; j <= lb; j++ {
+		prev[j] = j
 	}
-	for i := remainder; i < len(s); i += 3 {
-		if i > remainder {
-			result.WriteString(",")
+
+	for i := 1; i <= la; i++ {
+		curr[0] = i
+		for j := 1; j <= lb; j++ {
+			cost := 1
+			if a[i-1] == b[j-1] {
+				cost = 0
+			}
+			del := prev[j] + 1
+			ins := curr[j-1] + 1
+			sub := prev[j-1] + cost
+			min := del
+			if ins < min {
+				min = ins
+			}
+			if sub < min {
+				min = sub
+			}
+			curr[j] = min
 		}
-		result.WriteString(s[i : i+3])
+		prev, curr = curr, prev
 	}
-	return result.String()
+	return prev[lb]
 }
 
-// FindModel finds a model by exact match, case-insensitive, or partial match.
+// SuggestModels returns the n closest model IDs to the input by Levenshtein distance.
+func SuggestModels(input string, n int) []string {
+	type candidate struct {
+		id   string
+		dist int
+	}
+	lower := strings.ToLower(input)
+	var candidates []candidate
+	for key := range models.Models {
+		dist := levenshteinDistance(lower, strings.ToLower(key))
+		candidates = append(candidates, candidate{id: key, dist: dist})
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if candidates[i].dist != candidates[j].dist {
+			return candidates[i].dist < candidates[j].dist
+		}
+		return candidates[i].id < candidates[j].id
+	})
+	var result []string
+	for i := 0; i < n && i < len(candidates); i++ {
+		result = append(result, candidates[i].id)
+	}
+	return result
+}
+
+// FindModel finds a model by exact match, alias, case-insensitive, or partial match.
+// Partial matching is deterministic: shortest ID first, then alphabetically.
 func FindModel(modelID string) (models.Model, bool) {
 	// Exact match
 	if m, ok := models.Models[modelID]; ok {
 		return m, true
 	}
 
-	// Case-insensitive / partial match
-	lower := strings.ToLower(modelID)
-	for key, m := range models.Models {
-		if strings.ToLower(key) == lower || strings.Contains(strings.ToLower(key), lower) {
+	// Alias resolution
+	if canonical, ok := models.Aliases[modelID]; ok {
+		if m, ok := models.Models[canonical]; ok {
 			return m, true
 		}
+	}
+
+	// Case-insensitive / partial match — collect all candidates, then sort deterministically
+	lower := strings.ToLower(modelID)
+	var candidates []models.Model
+	for key, m := range models.Models {
+		if strings.ToLower(key) == lower {
+			return m, true // Exact case-insensitive — return immediately
+		}
+		if strings.Contains(strings.ToLower(key), lower) {
+			candidates = append(candidates, m)
+		}
+	}
+
+	// Sort: shortest ID first, then alphabetically
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if len(candidates[i].ID) != len(candidates[j].ID) {
+			return len(candidates[i].ID) < len(candidates[j].ID)
+		}
+		return candidates[i].ID < candidates[j].ID
+	})
+	if len(candidates) > 0 {
+		return candidates[0], true
 	}
 
 	return models.Model{}, false

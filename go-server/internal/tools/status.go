@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"go-server/internal/models"
 )
@@ -18,8 +19,9 @@ type CheckModelStatusInput struct {
 func CheckModelStatus(modelID string) string {
 	m, found := FindModel(modelID)
 	if !found {
+		suggestions := SuggestModels(modelID, 3)
 		return fmt.Sprintf("`%s` is **not found** in the registry. "+
-			"It may be misspelled, very old, or not yet tracked.", modelID)
+			"Did you mean: %s", modelID, strings.Join(suggestions, ", "))
 	}
 
 	result := fmt.Sprintf("**%s** (`%s`): status = **%s**",
@@ -51,4 +53,3 @@ func CheckModelStatus(modelID string) string {
 
 	return result
 }
-

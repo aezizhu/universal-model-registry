@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +18,8 @@ import (
 	"go-server/internal/resources"
 	"go-server/internal/tools"
 )
+
+var startTime = time.Now()
 
 // Tool input types matching the SDK's ToolHandlerFor generic pattern.
 
@@ -208,8 +211,14 @@ func serveHTTP(label string, handler http.Handler) {
 	// Health endpoint that doesn't create MCP sessions.
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "ok")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"status":      "ok",
+			"models":      len(models.Models),
+			"version":     "1.0.1",
+			"uptime_secs": int(time.Since(startTime).Seconds()),
+			"transport":   label,
+		})
 	})
 	mux.Handle("/", handler)
 

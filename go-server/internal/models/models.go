@@ -1,5 +1,10 @@
 package models
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Model represents an AI model entry in the registry.
 type Model struct {
 	ID              string  `json:"id"`
@@ -15,4 +20,43 @@ type Model struct {
 	ReleaseDate     string  `json:"release_date"`
 	Status          string  `json:"status"`
 	Notes           string  `json:"notes"`
+}
+
+// Aliases maps common shorthand model IDs to their canonical registry key.
+var Aliases = map[string]string{
+	"claude-sonnet-4-5":        "claude-sonnet-4-5-20250929",
+	"claude-haiku-4-5":         "claude-haiku-4-5-20251001",
+	"claude-3-7-sonnet-latest": "claude-3-7-sonnet-20250219",
+	"claude-opus-4-5-20251101": "claude-opus-4-5",
+	"claude-sonnet-4-20250514": "claude-sonnet-4-0",
+	"claude-opus-4-20250514":   "claude-opus-4-0",
+	"claude-opus-4-1-20250805": "claude-opus-4-1",
+	"gpt-4o-2024-05-13":        "gpt-4o",
+}
+
+// FormatInt formats an integer with comma separators.
+func FormatInt(n int) string {
+	if n < 0 {
+		return "-" + FormatInt(-n)
+	}
+	if n < 1000 {
+		return fmt.Sprintf("%d", n)
+	}
+
+	s := fmt.Sprintf("%d", n)
+	var result strings.Builder
+	remainder := len(s) % 3
+	if remainder > 0 {
+		result.WriteString(s[:remainder])
+		if len(s) > remainder {
+			result.WriteString(",")
+		}
+	}
+	for i := remainder; i < len(s); i += 3 {
+		if i > remainder {
+			result.WriteString(",")
+		}
+		result.WriteString(s[i : i+3])
+	}
+	return result.String()
 }

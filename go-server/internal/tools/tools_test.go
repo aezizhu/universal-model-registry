@@ -283,17 +283,17 @@ func TestFormatInt(t *testing.T) {
 		{10000000, "10,000,000"},
 	}
 	for _, tc := range tests {
-		got := formatInt(tc.input)
+		got := models.FormatInt(tc.input)
 		if got != tc.want {
-			t.Errorf("formatInt(%d) = %q, want %q", tc.input, got, tc.want)
+			t.Errorf("FormatInt(%d) = %q, want %q", tc.input, got, tc.want)
 		}
 	}
 }
 
 func TestFormatInt_Negative(t *testing.T) {
-	got := formatInt(-1000)
+	got := models.FormatInt(-1000)
 	if got != "-1,000" {
-		t.Errorf("formatInt(-1000) = %q, want %q", got, "-1,000")
+		t.Errorf("FormatInt(-1000) = %q, want %q", got, "-1,000")
 	}
 }
 

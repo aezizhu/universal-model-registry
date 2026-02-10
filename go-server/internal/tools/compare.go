@@ -34,7 +34,12 @@ func CompareModels(modelIDs []string) string {
 	}
 
 	if len(notFound) > 0 {
-		return fmt.Sprintf("Model(s) not found: %s", strings.Join(notFound, ", "))
+		var parts []string
+		for _, nf := range notFound {
+			suggestions := SuggestModels(nf, 3)
+			parts = append(parts, fmt.Sprintf("`%s` (did you mean: %s)", nf, strings.Join(suggestions, ", ")))
+		}
+		return fmt.Sprintf("Model(s) not found: %s", strings.Join(parts, "; "))
 	}
 
 	if len(found) < 2 {
@@ -63,8 +68,8 @@ func CompareModels(modelIDs []string) string {
 	for i, m := range found {
 		providers[i] = m.Provider
 		statuses[i] = m.Status
-		contexts[i] = formatInt(m.ContextWindow)
-		maxOutputs[i] = formatInt(m.MaxOutputTokens)
+		contexts[i] = models.FormatInt(m.ContextWindow)
+		maxOutputs[i] = models.FormatInt(m.MaxOutputTokens)
 		capabilities[i] = caps(m)
 		inputPrices[i] = fmt.Sprintf("$%.2f", m.PricingInput)
 		outputPrices[i] = fmt.Sprintf("$%.2f", m.PricingOutput)
