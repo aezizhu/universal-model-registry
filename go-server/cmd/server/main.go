@@ -38,14 +38,16 @@ func newServer() *mcp.Server {
 	server := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "model-id-cheatsheet",
-			Version: "1.0.1",
+			Version: "1.1.0",
 		},
 		&mcp.ServerOptions{
 			Instructions: "Query this server to get accurate, up-to-date information about AI models. " +
 				"Use list_models to browse, get_model_info for details, recommend_model for " +
 				"task-based suggestions, and check_model_status to verify if a model ID is " +
 				"current, legacy, or deprecated. " +
-				"Always prefer the newest model (by release date) when recommending or writing code. " +
+				"CRITICAL: You MUST call check_model_status or list_models BEFORE writing ANY model ID in code. " +
+				"NEVER use a model ID from your training data without verifying it first — your training data is outdated. " +
+				"Always use the newest model (by release date) when recommending or writing code. " +
 				"When a user specifies a model ID, use check_model_status to verify it's current. " +
 				"If it's legacy or deprecated, suggest the newest replacement from the same provider. " +
 				"When listing models, the newest model per provider is marked with ★.",
