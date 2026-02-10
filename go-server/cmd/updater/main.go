@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -20,7 +21,7 @@ type Provider struct {
 
 var providers = map[string]Provider{
 	"OpenAI":    {URL: "https://api.openai.com/v1/models", AuthEnv: "OPENAI_API_KEY", AuthHeader: "Authorization"},
-	"Anthropic": {URL: "https://api.anthropic.com/v1/models", AuthEnv: "ANTHROPIC_API_KEY", AuthHeader: "x-api-key"},
+	"Anthropic": {URL: "https://api.anthropic.com/v1/models?limit=1000", AuthEnv: "ANTHROPIC_API_KEY", AuthHeader: "x-api-key"},
 	"Google":    {URL: "https://generativelanguage.googleapis.com/v1beta/models", AuthEnv: "GEMINI_API_KEY", AuthHeader: ""},
 	"Mistral":   {URL: "https://api.mistral.ai/v1/models", AuthEnv: "MISTRAL_API_KEY", AuthHeader: "Authorization"},
 	"xAI":       {URL: "https://api.x.ai/v1/models", AuthEnv: "XAI_API_KEY", AuthHeader: "Authorization"},
@@ -128,11 +129,14 @@ type apiModel struct {
 	Name string `json:"name"` // Google uses "name" (e.g. "models/gemini-2.5-pro")
 }
 
+const maxRetries = 3
+
 func main() {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 	ctx := context.Background()
 
 	hasChanges := false
+	hasErrors := false
 	providerOrder := []string{"OpenAI", "Anthropic", "Google", "Mistral", "xAI", "DeepSeek"}
 
 	fmt.Println("=== Model Registry Update Check ===")
@@ -146,9 +150,10 @@ func main() {
 			continue
 		}
 
-		ids, err := fetchModels(ctx, client, name, p, key)
+		ids, err := fetchModelsWithRetry(ctx, client, name, p, key)
 		if err != nil {
 			fmt.Printf("[%s] ERROR: %v\n", name, err)
+			hasErrors = true
 			continue
 		}
 
@@ -187,20 +192,45 @@ func main() {
 	fmt.Println("[AI21] SKIP: no public model-listing API (check docs.ai21.com)")
 
 	fmt.Println("\n=== Summary ===")
+	if hasErrors {
+		fmt.Println("WARNING: Some providers failed to respond (see errors above).")
+	}
 	if hasChanges {
 		fmt.Println("Changes detected. Review the output above.")
+		os.Exit(1)
+	}
+	if hasErrors {
+		fmt.Println("No model changes detected, but some providers could not be checked.")
 		os.Exit(1)
 	}
 	fmt.Println("All tracked providers are in sync.")
 	os.Exit(0)
 }
 
+// fetchModelsWithRetry wraps fetchModels with retry logic for transient failures.
+func fetchModelsWithRetry(ctx context.Context, client *http.Client, name string, p Provider, key string) ([]string, error) {
+	var lastErr error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		ids, err := fetchModels(ctx, client, name, p, key)
+		if err == nil {
+			return ids, nil
+		}
+		lastErr = err
+		if attempt < maxRetries {
+			backoff := time.Duration(attempt) * 2 * time.Second
+			fmt.Printf("[%s] attempt %d/%d failed: %v (retrying in %s)\n", name, attempt, maxRetries, err, backoff)
+			time.Sleep(backoff)
+		}
+	}
+	return nil, fmt.Errorf("all %d attempts failed: %w", maxRetries, lastErr)
+}
+
 // fetchModels queries a provider's model listing endpoint and returns model IDs.
 func fetchModels(ctx context.Context, client *http.Client, name string, p Provider, key string) ([]string, error) {
 	url := p.URL
 	if p.AuthHeader == "" {
-		// Google: API key as query parameter
-		url += "?key=" + key
+		// Google: API key as query parameter, request large page to avoid pagination
+		url += "?key=" + key + "&pageSize=100"
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -226,7 +256,8 @@ func fetchModels(ctx context.Context, client *http.Client, name string, p Provid
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
 	}
 
 	var result apiResponse
@@ -235,6 +266,7 @@ func fetchModels(ctx context.Context, client *http.Client, name string, p Provid
 	}
 
 	// Collect model IDs from whichever field is populated.
+	seen := make(map[string]bool)
 	var ids []string
 	models := result.Data
 	if len(models) == 0 {
@@ -246,9 +278,14 @@ func fetchModels(ctx context.Context, client *http.Client, name string, p Provid
 			// Google returns "models/gemini-2.5-pro" — strip prefix.
 			id = strings.TrimPrefix(m.Name, "models/")
 		}
-		if id != "" {
+		if id != "" && !seen[id] {
+			seen[id] = true
 			ids = append(ids, id)
 		}
+	}
+
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("API returned 0 models (possible format change)")
 	}
 
 	return ids, nil

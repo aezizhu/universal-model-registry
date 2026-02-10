@@ -5,9 +5,14 @@ on:
     - cron: '0 3 * * *' # Daily at 7 PM San Francisco time (PST); 8 PM during daylight saving (PDT)
   workflow_dispatch:
 
+concurrency:
+  group: auto-update-models
+  cancel-in-progress: false
+
 jobs:
   check-updates:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: go-server
@@ -37,10 +42,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue create \
-            --title "Model Update Detected - $(date +%Y-%m-%d)" \
-            --body "$(cat ../update-report.txt)" \
-            --label "auto-update"
+          TITLE="Model Update Detected - $(date +%Y-%m-%d)"
+          EXISTING=$(gh issue list --label "auto-update" --search "$TITLE" --state open --json number --jq 'length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Issue already exists for today, skipping."
+          else
+            gh issue create \
+              --title "$TITLE" \
+              --body "$(cat ../update-report.txt)" \
+              --label "auto-update"
+          fi
 
       - name: Upload report
         if: always()
