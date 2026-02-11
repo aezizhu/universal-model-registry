@@ -543,8 +543,9 @@ func TestRecommendModel_EmptyTask(t *testing.T) {
 
 func TestRecommendModel_UnlimitedBudget(t *testing.T) {
 	result := RecommendModel("general tasks", "unlimited")
-	if !strings.Contains(result, "Budget:** unlimited") {
-		t.Error("expected 'Budget:** unlimited' in result")
+	// "unlimited" normalizes to "expensive"
+	if !strings.Contains(result, "Budget:** expensive") {
+		t.Error("expected 'Budget:** expensive' in result (unlimited normalizes to expensive)")
 	}
 }
 
@@ -559,6 +560,48 @@ func TestRecommendModel_OpenWeight(t *testing.T) {
 	result := RecommendModel("open weight model for self-hosting", "")
 	if !strings.Contains(result, "1.") {
 		t.Error("expected recommendations for open weight task")
+	}
+}
+
+func TestRecommendModel_LowBudgetAvoidsExpensive(t *testing.T) {
+	result := RecommendModel("code generation", "low")
+	// "low" should be treated as "cheap" — the top recommendations
+	// must NOT include models costing > $5/M input.
+	if strings.Contains(result, "gpt-5.2-pro") {
+		t.Error("low budget should NOT recommend gpt-5.2-pro ($21/M)")
+	}
+	if strings.Contains(result, "o3-pro") {
+		t.Error("low budget should NOT recommend o3-pro ($20/M)")
+	}
+	if strings.Contains(result, "o3-deep-research") {
+		t.Error("low budget should NOT recommend o3-deep-research ($10/M)")
+	}
+}
+
+func TestRecommendModel_BudgetNormalization(t *testing.T) {
+	// "low" and "cheap" should produce the same results
+	low := RecommendModel("general tasks", "low")
+	cheap := RecommendModel("general tasks", "cheap")
+	if low != cheap {
+		t.Error("expected 'low' and 'cheap' budgets to produce identical results")
+	}
+	// "high" and "expensive" should produce the same results
+	high := RecommendModel("general tasks", "high")
+	expensive := RecommendModel("general tasks", "expensive")
+	if high != expensive {
+		t.Error("expected 'high' and 'expensive' budgets to produce identical results")
+	}
+}
+
+func TestRecommendModel_CodingPrefersCodingModels(t *testing.T) {
+	result := RecommendModel("coding tasks", "moderate")
+	// At least one coding-specialized model should appear
+	hasCodingModel := strings.Contains(result, "codex") ||
+		strings.Contains(result, "devstral") ||
+		strings.Contains(result, "kat-coder") ||
+		strings.Contains(strings.ToLower(result), "code")
+	if !hasCodingModel {
+		t.Error("coding task should recommend at least one coding-specialized model")
 	}
 }
 

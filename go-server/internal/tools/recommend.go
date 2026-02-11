@@ -14,16 +14,27 @@ import (
 // RecommendModelInput holds parameters for the recommend_model tool.
 type RecommendModelInput struct {
 	Task   string `json:"task" jsonschema:"Description of the task you need a model for"`
-	Budget string `json:"budget,omitempty" jsonschema:"Budget level: cheap, moderate, or expensive"`
+	Budget string `json:"budget,omitempty" jsonschema:"Budget level: cheap/low, moderate/medium, or expensive/high/unlimited"`
+}
+
+// normalizeBudget maps common budget synonyms to canonical values.
+func normalizeBudget(b string) string {
+	switch strings.ToLower(b) {
+	case "low", "cheap", "budget", "free", "minimal":
+		return "cheap"
+	case "high", "expensive", "unlimited", "premium", "no limit":
+		return "expensive"
+	case "", "moderate", "medium", "mid", "normal", "standard":
+		return "moderate"
+	default:
+		return strings.ToLower(b)
+	}
 }
 
 // RecommendModel scores current models against a task description and budget,
 // returning the top 3 recommendations as a markdown list.
 func RecommendModel(task, budget string) string {
-	if budget == "" {
-		budget = "moderate"
-	}
-	budget = strings.ToLower(budget)
+	budget = normalizeBudget(budget)
 	taskLower := strings.ToLower(task)
 
 	// Collect current models
@@ -55,7 +66,9 @@ func RecommendModel(task, budget string) string {
 			if m.ContextWindow >= 200_000 {
 				score += 1
 			}
-			if strings.Contains(m.ID, "codestral") || strings.Contains(m.ID, "devstral") {
+			if strings.Contains(m.ID, "codestral") || strings.Contains(m.ID, "devstral") ||
+				strings.Contains(m.ID, "codex") || strings.Contains(m.ID, "-code-") ||
+				strings.Contains(m.ID, "kat-coder") {
 				score += 2
 			}
 		}
@@ -118,16 +131,28 @@ func RecommendModel(task, budget string) string {
 		// ── Budget modifier ──
 		switch budget {
 		case "cheap":
+			// Strongly reward cheap models, heavily penalize expensive ones
 			score += math.Max(0, 3-m.PricingInput)
-			if m.PricingInput > 5 {
+			if m.PricingInput > 3 {
+				score -= 3
+			}
+			if m.PricingInput > 10 {
 				score -= 5
 			}
-		case "unlimited", "expensive":
+			// Invert quality signal: reward cheap models
+			score += math.Max(0, 2-m.PricingInput*0.5)
+		case "expensive":
 			score += math.Min(m.PricingInput, 5)
+			// General quality signal: higher price = more capable
+			score += math.Min(m.PricingInput*0.3, 2)
+		default: // "moderate"
+			// Slight penalty for very expensive models
+			if m.PricingInput > 10 {
+				score -= 2
+			}
+			// Mild quality signal
+			score += math.Min(m.PricingInput*0.2, 1)
 		}
-
-		// General quality signal
-		score += math.Min(m.PricingInput*0.3, 2)
 
 		// Recency bonus: newer models get a boost (0 to 1.5 points)
 		score += recencyBonus(m.ReleaseDate)

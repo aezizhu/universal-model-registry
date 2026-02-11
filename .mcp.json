@@ -1,5 +1,7 @@
 {
-  "model-id-cheatsheet": {
-    "url": "https://universal-model-registry-production.up.railway.app/mcp"
+  "mcpServers": {
+    "model-id-cheatsheet": {
+      "url": "https://universal-model-registry-production.up.railway.app/mcp"
+    }
   }
 }
