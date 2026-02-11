@@ -27,6 +27,12 @@ jobs:
             exit 0
           fi
 
+          AUTHOR=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json author --jq '.author.login')
+          if [ "$AUTHOR" != "github-actions[bot]" ]; then
+            echo "::warning::PR #$PR_NUMBER authored by '$AUTHOR', expected 'github-actions[bot]'. Skipping merge."
+            exit 0
+          fi
+
           LABEL=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name' | grep -c "auto-update" || true)
           if [ "$LABEL" -eq 0 ]; then
             echo "PR does not have auto-update label, skipping"

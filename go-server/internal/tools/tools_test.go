@@ -1,8 +1,10 @@
 package tools
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"go-server/internal/models"
 )
@@ -154,7 +156,7 @@ func TestCheckModelStatus_Current(t *testing.T) {
 }
 
 func TestCheckModelStatus_Legacy(t *testing.T) {
-	result := CheckModelStatus("gpt-4.1")
+	result := CheckModelStatus("o3-mini")
 	lower := strings.ToLower(result)
 	if !strings.Contains(lower, "legacy") {
 		t.Error("expected 'legacy' in result")
@@ -764,6 +766,139 @@ func TestSuggestModels_CaseInsensitive(t *testing.T) {
 	for i := range lower {
 		if lower[i] != upper[i] {
 			t.Errorf("suggestion %d differs: %q vs %q", i, lower[i], upper[i])
+		}
+	}
+}
+
+// ── levenshteinDistance tests ─────────────────────────────────────────
+
+func TestLevenshteinDistance(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want int
+	}{
+		{"", "", 0},
+		{"abc", "abc", 0},
+		{"kitten", "sitting", 3},
+		{"abc", "xyz", 3},
+		{"", "hello", 5},
+		{"hello", "", 5},
+	}
+	for _, tc := range tests {
+		got := levenshteinDistance(tc.a, tc.b)
+		if got != tc.want {
+			t.Errorf("levenshteinDistance(%q, %q) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
+	}
+}
+
+// ── FormatTable ★ marking tests ──────────────────────────────────────
+
+func TestFormatTable_StarMarking(t *testing.T) {
+	ms := []models.Model{
+		{
+			ID:          "old-model",
+			DisplayName: "Old Model",
+			Provider:    "TestProvider",
+			Status:      "legacy",
+			ReleaseDate: "2024-01",
+		},
+		{
+			ID:          "new-model",
+			DisplayName: "New Model",
+			Provider:    "TestProvider",
+			Status:      "current",
+			ReleaseDate: "2025-06",
+		},
+	}
+	result := FormatTable(ms)
+	// The newest model should have ★
+	if !strings.Contains(result, "★ new-model") {
+		t.Error("expected ★ before newest model 'new-model'")
+	}
+	// The older model should NOT have ★
+	if strings.Contains(result, "★ old-model") {
+		t.Error("did not expect ★ before older model 'old-model'")
+	}
+}
+
+func TestFormatTable_UseInCodeFooter(t *testing.T) {
+	ms := []models.Model{
+		{
+			ID:          "model-a",
+			DisplayName: "Model A",
+			Provider:    "ProviderA",
+			Status:      "current",
+			ReleaseDate: "2025-06",
+		},
+		{
+			ID:          "model-b",
+			DisplayName: "Model B",
+			Provider:    "ProviderB",
+			Status:      "current",
+			ReleaseDate: "2025-03",
+		},
+	}
+	result := FormatTable(ms)
+	if !strings.Contains(result, "USE IN CODE:") {
+		t.Error("expected 'USE IN CODE:' in FormatTable footer")
+	}
+	// Both are newest for their respective providers, so both should appear
+	if !strings.Contains(result, "model-a") {
+		t.Error("expected 'model-a' in USE IN CODE footer")
+	}
+	if !strings.Contains(result, "model-b") {
+		t.Error("expected 'model-b' in USE IN CODE footer")
+	}
+}
+
+// ── CompareModels field completeness test ────────────────────────────
+
+func TestCompareModels_FieldCompleteness(t *testing.T) {
+	result := CompareModels([]string{"gpt-5", "claude-opus-4-6"})
+	requiredFields := []string{
+		"Provider",
+		"Status",
+		"Context",
+		"Max Output",
+		"Capabilities",
+		"Input $/1M",
+		"Output $/1M",
+		"Knowledge Cutoff",
+		"Release Date",
+	}
+	for _, field := range requiredFields {
+		if !strings.Contains(result, "| "+field+" |") {
+			t.Errorf("CompareModels output missing field row %q", field)
+		}
+	}
+}
+
+// ── recencyBonus tests ───────────────────────────────────────────────
+
+func TestRecencyBonus(t *testing.T) {
+	now := time.Now()
+
+	fmtDate := func(t time.Time) string {
+		return fmt.Sprintf("%d-%02d", t.Year(), t.Month())
+	}
+
+	tests := []struct {
+		name        string
+		releaseDate string
+		want        float64
+	}{
+		{"this month", fmtDate(now), 1.5},
+		{"3 months ago (within ≤6 window)", fmtDate(now.AddDate(0, -3, 0)), 1.5},
+		{"12 months ago (mid-decay)", fmtDate(now.AddDate(0, -12, 0)), 0.75},
+		{"24 months ago (beyond 18-month cutoff)", fmtDate(now.AddDate(0, -24, 0)), 0},
+		{"invalid date", "abc", 0},
+		{"empty date", "", 0},
+	}
+	for _, tc := range tests {
+		got := recencyBonus(tc.releaseDate)
+		if got != tc.want {
+			t.Errorf("recencyBonus(%q) [%s] = %.4f, want %.4f", tc.releaseDate, tc.name, got, tc.want)
 		}
 	}
 }

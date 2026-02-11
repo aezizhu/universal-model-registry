@@ -47,13 +47,15 @@ type Limiter struct {
 	ips       map[string]*ipState
 	totalConn int
 	cfg       Config
+	stopCh    chan struct{}
 }
 
 // NewLimiter creates a new rate limiter with the given config.
 func NewLimiter(cfg Config) *Limiter {
 	l := &Limiter{
-		ips: make(map[string]*ipState),
-		cfg: cfg,
+		ips:    make(map[string]*ipState),
+		cfg:    cfg,
+		stopCh: make(chan struct{}),
 	}
 	// Periodically clean up stale entries.
 	go l.cleanup()
@@ -63,16 +65,26 @@ func NewLimiter(cfg Config) *Limiter {
 func (l *Limiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		l.mu.Lock()
-		now := time.Now()
-		for ip, s := range l.ips {
-			if s.connections == 0 && now.Sub(s.windowStart) > l.cfg.Window*2 {
-				delete(l.ips, ip)
+	for {
+		select {
+		case <-ticker.C:
+			l.mu.Lock()
+			now := time.Now()
+			for ip, s := range l.ips {
+				if s.connections == 0 && now.Sub(s.windowStart) > l.cfg.Window*2 {
+					delete(l.ips, ip)
+				}
 			}
+			l.mu.Unlock()
+		case <-l.stopCh:
+			return
 		}
-		l.mu.Unlock()
 	}
+}
+
+// Stop terminates the background cleanup goroutine.
+func (l *Limiter) Stop() {
+	close(l.stopCh)
 }
 
 func extractIP(r *http.Request) string {

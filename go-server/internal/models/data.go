@@ -257,7 +257,7 @@ var Models = map[string]Model{
 		PricingOutput:   8.00,
 		KnowledgeCutoff: "2024-06",
 		ReleaseDate:     "2025-04",
-		Status:          "legacy",
+		Status:          "deprecated",
 		Notes:           "1M context window, strong coding. Retiring from ChatGPT Feb 13, 2026. Superseded by GPT-5 series",
 	},
 	"gpt-4o": {

@@ -291,6 +291,7 @@ func serveHTTP(transport string) {
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
 		fmt.Fprintln(os.Stderr, "\nShutting down gracefully...")
+		limiter.Stop()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
