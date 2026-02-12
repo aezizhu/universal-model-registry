@@ -88,7 +88,7 @@ func TestAtLeastThreeProviders(t *testing.T) {
 }
 
 func TestTotalModelCount(t *testing.T) {
-	if len(Models) != 94 {
+	if len(Models) != 95 {
 		t.Errorf("expected 94 models, got %d", len(Models))
 	}
 }
@@ -112,7 +112,7 @@ func TestProviderCounts(t *testing.T) {
 		"Perplexity": 4,
 		"AI21":       2,
 		"Moonshot":   3,
-		"Zhipu":      3,
+		"Zhipu":      4,
 		"NVIDIA":     2,
 		"Tencent":    3,
 		"Microsoft":  3,

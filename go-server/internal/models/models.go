@@ -283,8 +283,13 @@ var Aliases = map[string]string{
 	"moonshot/kimi-k2":              "kimi-k2-0905-preview",
 
 	// ─── Zhipu/GLM Aliases (NEW PROVIDER) ─────────────────────────
-	"glm":                      "glm-4.7",
-	"glm-latest":               "glm-4.7",
+	"glm":                      "glm-5",
+	"glm-latest":               "glm-5",
+	"glm5":                     "glm-5",
+	"glm-5-0":                  "glm-5",
+	"zhipu-glm-5":              "glm-5",
+	"chatglm-5":                "glm-5",
+	"zhipu/glm-5":              "glm-5",
 	"glm-4-7":                  "glm-4.7",
 	"glm47":                    "glm-4.7",
 	"glm4.7":                   "glm-4.7",

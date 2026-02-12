@@ -1208,6 +1208,21 @@ var Models = map[string]Model{
 		Notes:           "Strong coding and agentic tasks, 1T MoE (32B active), 256K context. API: api.moonshot.ai/v1",
 	},
 	// ─── Zhipu (GLM): Current ─────────────────────────────────────────
+	"glm-5": {
+		ID:              "glm-5",
+		DisplayName:     "GLM-5",
+		Provider:        "Zhipu",
+		ContextWindow:   200_000,
+		MaxOutputTokens: 128_000,
+		Vision:          true,
+		Reasoning:       true,
+		PricingInput:    1.00,
+		PricingOutput:   3.20,
+		KnowledgeCutoff: "2024-09",
+		ReleaseDate:     "2026-02",
+		Status:          "current",
+		Notes:           "Zhipu flagship, 744B MoE (40B active), native multimodal (image/audio/video), interleaved thinking. API: open.bigmodel.cn. Also: z.ai, zhipuai",
+	},
 	"glm-4.7": {
 		ID:              "glm-4.7",
 		DisplayName:     "GLM-4.7",

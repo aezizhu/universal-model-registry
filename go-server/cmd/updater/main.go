@@ -18,19 +18,18 @@ import (
 // DocSource describes a public documentation page to scrape for model IDs.
 // No API keys needed — these are all publicly accessible pages.
 type DocSource struct {
-	URLs    []string       // URLs to try in order (fallbacks)
-	Pattern *regexp.Regexp // Regex to extract model IDs from page content
+	URLs           []string       // URLs to try in order (fallbacks)
+	Pattern        *regexp.Regexp // Regex to extract model IDs from page content
+	ExcludePattern *regexp.Regexp // Optional: exclude matched IDs containing this pattern
+	Lowercase      bool           // Lowercase extracted IDs before comparison
 }
 
 // docSources maps provider name to its public documentation source.
 // Each entry contains public URLs and a regex pattern to extract model IDs.
 var docSources = map[string]DocSource{
 	"OpenAI": {
-		// OpenAI blocks scraping on their docs site (403), so we use
-		// the GitHub raw content of their Python SDK which lists model IDs.
 		URLs: []string{
-			"https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/chat/chat_completion.py",
-			"https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/model.py",
+			"https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/shared/chat_model.py",
 		},
 		Pattern: regexp.MustCompile(`(?:"|')((?:gpt-[0-9][a-z0-9._-]*|o[0-9](?:-[a-z0-9-]+)*))`),
 	},
@@ -57,7 +56,8 @@ var docSources = map[string]DocSource{
 		URLs: []string{
 			"https://docs.x.ai/docs/models",
 		},
-		Pattern: regexp.MustCompile(`(grok-[0-9]+(?:\.[0-9]+)?(?:-(?:mini|fast|code-fast-1))*)`),
+		Pattern:        regexp.MustCompile(`(grok-(?:[0-9]+(?:\.[0-9]+)?(?:-[a-z0-9-]*)?|code-[a-z0-9-]+))`),
+		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)`),
 	},
 	"DeepSeek": {
 		URLs: []string{
@@ -65,6 +65,20 @@ var docSources = map[string]DocSource{
 			"https://api-docs.deepseek.com/",
 		},
 		Pattern: regexp.MustCompile(`(deepseek-(?:chat|reasoner|r1|coder|v[0-9]+))`),
+	},
+	"Zhipu": {
+		URLs: []string{
+			"https://docs.z.ai/guides/overview/pricing",
+		},
+		Pattern:   regexp.MustCompile(`(?i)(GLM-[0-9]+(?:\.[0-9]+)?(?:-[A-Za-z]+)*)`),
+		Lowercase: true,
+	},
+	"MiniMax": {
+		URLs: []string{
+			"https://intl.minimaxi.com/",
+		},
+		Pattern:   regexp.MustCompile(`(?i)(MiniMax-M[0-9](?:\.[0-9]+)?)(?:[^0-9a-zA-Z.]|$)`),
+		Lowercase: true,
 	},
 }
 
@@ -174,6 +188,7 @@ var knownModels = map[string]map[string]bool{
 		"kimi-k2-0905-preview": true,
 	},
 	"Zhipu": {
+		"glm-5":          true,
 		"glm-4.7":        true,
 		"glm-4.7-flashx": true,
 		"glm-4.6v":       true,
@@ -212,7 +227,7 @@ func main() {
 
 	hasChanges := false
 	hasErrors := false
-	providerOrder := []string{"OpenAI", "Anthropic", "Google", "Mistral", "xAI", "DeepSeek"}
+	providerOrder := []string{"OpenAI", "Anthropic", "Google", "Mistral", "xAI", "DeepSeek", "Zhipu", "MiniMax"}
 
 	// Capture report output for GitHub issue/PR creation.
 	var report strings.Builder
@@ -310,7 +325,30 @@ func fetchModelsFromDocs(ctx context.Context, client *http.Client, src DocSource
 			continue
 		}
 		if len(ids) > 0 {
-			return ids, nil
+			if src.ExcludePattern != nil {
+				filtered := ids[:0]
+				for _, id := range ids {
+					if !src.ExcludePattern.MatchString(id) {
+						filtered = append(filtered, id)
+					}
+				}
+				ids = filtered
+			}
+			if src.Lowercase {
+				seen := make(map[string]bool, len(ids))
+				deduped := make([]string, 0, len(ids))
+				for _, id := range ids {
+					lower := strings.ToLower(id)
+					if !seen[lower] {
+						seen[lower] = true
+						deduped = append(deduped, lower)
+					}
+				}
+				ids = deduped
+			}
+			if len(ids) > 0 {
+				return ids, nil
+			}
 		}
 	}
 	if lastErr != nil {
@@ -631,7 +669,61 @@ func createDeprecationPR(ctx context.Context, client *http.Client, missingIDs []
 	}
 }
 
+// dateStampRe matches IDs ending with an 8-digit date like -20250805.
+var dateStampRe = regexp.MustCompile(`-\d{8}$`)
+
+// isDateStampVariant returns true if the model ID ends with a YYYYMMDD date
+// suffix (e.g. claude-opus-4-1-20250805). These are snapshot releases of an
+// existing model, not genuinely new models.
+func isDateStampVariant(id string) bool {
+	return dateStampRe.MatchString(id)
+}
+
+// isAllDigits returns true if the string is non-empty and contains only digits.
+func isAllDigits(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// isKnownAlias returns true if the scraped ID is a recognised variant of an
+// already-tracked model. It catches two patterns:
+//
+//  1. The scraped ID is the base form of a known ID whose extra suffix is
+//     purely numeric (version or date). For example scraped "claude-opus-4"
+//     matches known "claude-opus-4-0" because suffix "0" is numeric.
+//     This does NOT match model-number suffixes like "mini", "fast", etc.
+//
+//  2. The scraped ID is a known ID with a common pointer suffix appended,
+//     such as "-latest" or "-beta".
+func isKnownAlias(id string, known map[string]bool) bool {
+	for knownID := range known {
+		if knownID != id && strings.HasPrefix(knownID, id+"-") {
+			suffix := knownID[len(id)+1:]
+			if isAllDigits(suffix) {
+				return true
+			}
+		}
+		if id != knownID && strings.HasPrefix(id, knownID+"-") {
+			suffix := id[len(knownID)+1:]
+			switch suffix {
+			case "latest", "beta":
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // diff compares our known models against doc results.
+// Date-stamp variants (e.g. -20250805) and recognised aliases are filtered
+// out of the "new" list so that only genuinely new model IDs are reported.
 func diff(known map[string]bool, docIDs []string) (newModels, missing []string) {
 	docSet := make(map[string]bool, len(docIDs))
 	for _, id := range docIDs {
@@ -639,9 +731,16 @@ func diff(known map[string]bool, docIDs []string) (newModels, missing []string) 
 	}
 
 	for _, id := range docIDs {
-		if !known[id] {
-			newModels = append(newModels, id)
+		if known[id] {
+			continue
 		}
+		if isDateStampVariant(id) {
+			continue
+		}
+		if isKnownAlias(id, known) {
+			continue
+		}
+		newModels = append(newModels, id)
 	}
 
 	for id := range known {
