@@ -22,6 +22,8 @@ type DocSource struct {
 	Pattern        *regexp.Regexp // Regex to extract model IDs from page content
 	ExcludePattern *regexp.Regexp // Optional: exclude matched IDs containing this pattern
 	Lowercase      bool           // Lowercase extracted IDs before comparison
+	NormalizeRe    *regexp.Regexp // Optional: normalize extracted IDs (regex)
+	NormalizeRepl  string         // Replacement for NormalizeRe
 }
 
 // docSources maps provider name to its public documentation source.
@@ -31,7 +33,8 @@ var docSources = map[string]DocSource{
 		URLs: []string{
 			"https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/shared/chat_model.py",
 		},
-		Pattern: regexp.MustCompile(`(?:"|')((?:gpt-[0-9][a-z0-9._-]*|o[0-9](?:-[a-z0-9-]+)*))`),
+		Pattern:        regexp.MustCompile(`(?:"|')((?:gpt-[0-9][a-z0-9._-]*|o[0-9](?:-[a-z0-9-]+)*))`),
+		ExcludePattern: regexp.MustCompile(`^gpt-(?:3\.|4(?:-|$))|^o1(?:-|$)`),
 	},
 	"Anthropic": {
 		URLs: []string{
@@ -58,6 +61,8 @@ var docSources = map[string]DocSource{
 		},
 		Pattern:        regexp.MustCompile(`(grok-(?:[0-9]+(?:\.[0-9]+)?(?:-[a-z0-9-]*)?|code-[a-z0-9-]+))`),
 		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)`),
+		NormalizeRe:    regexp.MustCompile(`(\d)-(\d)([^0-9]|$)`),
+		NormalizeRepl:  "${1}.${2}${3}",
 	},
 	"DeepSeek": {
 		URLs: []string{
@@ -75,9 +80,10 @@ var docSources = map[string]DocSource{
 	},
 	"MiniMax": {
 		URLs: []string{
+			"https://platform.minimax.io/docs/guides/models-intro",
 			"https://intl.minimaxi.com/",
 		},
-		Pattern:   regexp.MustCompile(`(?i)(MiniMax-M[0-9](?:\.[0-9]+)?)(?:[^0-9a-zA-Z.]|$)`),
+		Pattern:   regexp.MustCompile(`(?i)(MiniMax-M[0-9](?:\.[0-9]+)?(?:-[a-z0-9]+)*)`),
 		Lowercase: true,
 	},
 }
@@ -334,18 +340,25 @@ func fetchModelsFromDocs(ctx context.Context, client *http.Client, src DocSource
 				}
 				ids = filtered
 			}
-			if src.Lowercase {
-				seen := make(map[string]bool, len(ids))
-				deduped := make([]string, 0, len(ids))
-				for _, id := range ids {
-					lower := strings.ToLower(id)
-					if !seen[lower] {
-						seen[lower] = true
-						deduped = append(deduped, lower)
-					}
+			if src.NormalizeRe != nil {
+				for i, id := range ids {
+					ids[i] = src.NormalizeRe.ReplaceAllString(id, src.NormalizeRepl)
 				}
-				ids = deduped
 			}
+			if src.Lowercase {
+				for i, id := range ids {
+					ids[i] = strings.ToLower(id)
+				}
+			}
+			seen := make(map[string]bool, len(ids))
+			deduped := make([]string, 0, len(ids))
+			for _, id := range ids {
+				if !seen[id] {
+					seen[id] = true
+					deduped = append(deduped, id)
+				}
+			}
+			ids = deduped
 			if len(ids) > 0 {
 				return ids, nil
 			}
@@ -669,17 +682,18 @@ func createDeprecationPR(ctx context.Context, client *http.Client, missingIDs []
 	}
 }
 
-// dateStampRe matches IDs ending with an 8-digit date like -20250805.
-var dateStampRe = regexp.MustCompile(`-\d{8}$`)
+var dateStampRe = regexp.MustCompile(`-(?:\d{8}|\d{4}-\d{2}-\d{2})$`)
 
-// isDateStampVariant returns true if the model ID ends with a YYYYMMDD date
-// suffix (e.g. claude-opus-4-1-20250805). These are snapshot releases of an
-// existing model, not genuinely new models.
 func isDateStampVariant(id string) bool {
 	return dateStampRe.MatchString(id)
 }
 
-// isAllDigits returns true if the string is non-empty and contains only digits.
+var aliasSuffixes = map[string]bool{
+	"latest": true, "beta": true, "preview": true,
+	"chat-latest": true, "non-reasoning": true, "reasoning": true,
+	"non-reasoning-latest": true, "reasoning-latest": true,
+}
+
 func isAllDigits(s string) bool {
 	if len(s) == 0 {
 		return false
@@ -692,16 +706,6 @@ func isAllDigits(s string) bool {
 	return true
 }
 
-// isKnownAlias returns true if the scraped ID is a recognised variant of an
-// already-tracked model. It catches two patterns:
-//
-//  1. The scraped ID is the base form of a known ID whose extra suffix is
-//     purely numeric (version or date). For example scraped "claude-opus-4"
-//     matches known "claude-opus-4-0" because suffix "0" is numeric.
-//     This does NOT match model-number suffixes like "mini", "fast", etc.
-//
-//  2. The scraped ID is a known ID with a common pointer suffix appended,
-//     such as "-latest" or "-beta".
 func isKnownAlias(id string, known map[string]bool) bool {
 	for knownID := range known {
 		if knownID != id && strings.HasPrefix(knownID, id+"-") {
@@ -712,18 +716,30 @@ func isKnownAlias(id string, known map[string]bool) bool {
 		}
 		if id != knownID && strings.HasPrefix(id, knownID+"-") {
 			suffix := id[len(knownID)+1:]
-			switch suffix {
-			case "latest", "beta":
+			if aliasSuffixes[suffix] {
 				return true
+			}
+		}
+	}
+	if lastDash := strings.LastIndex(id, "-"); lastDash > 0 {
+		idBase := id[:lastDash]
+		idSuffix := id[lastDash+1:]
+		if isAllDigits(idSuffix) && len(idSuffix) >= 4 {
+			if known[idBase] {
+				return true
+			}
+			for knownID := range known {
+				if kd := strings.LastIndex(knownID, "-"); kd > 0 {
+					if id[:lastDash] == knownID[:kd] && isAllDigits(knownID[kd+1:]) {
+						return true
+					}
+				}
 			}
 		}
 	}
 	return false
 }
 
-// diff compares our known models against doc results.
-// Date-stamp variants (e.g. -20250805) and recognised aliases are filtered
-// out of the "new" list so that only genuinely new model IDs are reported.
 func diff(known map[string]bool, docIDs []string) (newModels, missing []string) {
 	docSet := make(map[string]bool, len(docIDs))
 	for _, id := range docIDs {

@@ -89,7 +89,7 @@ func TestAtLeastThreeProviders(t *testing.T) {
 
 func TestTotalModelCount(t *testing.T) {
 	if len(Models) != 95 {
-		t.Errorf("expected 94 models, got %d", len(Models))
+		t.Errorf("expected 95 models, got %d", len(Models))
 	}
 }
 
