@@ -42,6 +42,9 @@ var Aliases = map[string]string{
 	"gpt-5-1-codex":      "gpt-5.1-codex",
 	"gpt51codexmini":     "gpt-5.1-codex-mini",
 	"gpt-5-1-codex-mini": "gpt-5.1-codex-mini",
+	"gpt51mini":          "gpt-5.1-mini",
+	"gpt5.1mini":         "gpt-5.1-mini",
+	"gpt-5-1-mini":       "gpt-5.1-mini",
 
 	// GPT-5 series
 	"gpt5":      "gpt-5",
@@ -88,10 +91,17 @@ var Aliases = map[string]string{
 	"claude-opus-4.6":    "claude-opus-4-6",
 	"claude-4.6-opus":    "claude-opus-4-6",
 
+	// Claude Sonnet 4.6
+	"claude-sonnet-4.6":          "claude-sonnet-4-6",
+	"sonnet-4-6":                 "claude-sonnet-4-6",
+	"claude-4.6-sonnet":          "claude-sonnet-4-6",
+	"claude-sonnet-4-6-20260217": "claude-sonnet-4-6",
+	"sonnet":                     "claude-sonnet-4-6",
+	"claude-sonnet":              "claude-sonnet-4-6",
+	"claude-sonnet-latest":       "claude-sonnet-4-6",
+
 	// Claude Sonnet 4.5
 	"claude-sonnet-4-5":  "claude-sonnet-4-5-20250929",
-	"sonnet":             "claude-sonnet-4-5-20250929",
-	"claude-sonnet":      "claude-sonnet-4-5-20250929",
 	"sonnet-4-5":         "claude-sonnet-4-5-20250929",
 	"claude-4.5-sonnet":  "claude-sonnet-4-5-20250929",
 	"claude-sonnet-4.5":  "claude-sonnet-4-5-20250929",

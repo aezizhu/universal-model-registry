@@ -100,6 +100,7 @@ var knownModels = map[string]map[string]bool{
 		"gpt-5.1":            true,
 		"gpt-5.1-codex":      true,
 		"gpt-5.1-codex-mini": true,
+		"gpt-5.1-mini":       true,
 		"gpt-5":              true,
 		"gpt-5-mini":         true,
 		"gpt-5-nano":         true,
@@ -115,6 +116,7 @@ var knownModels = map[string]map[string]bool{
 		"gpt-4o-mini":        true,
 	},
 	"Anthropic": {
+		"claude-sonnet-4-6":          true,
 		"claude-opus-4-6":            true,
 		"claude-sonnet-4-5-20250929": true,
 		"claude-haiku-4-5-20251001":  true,
