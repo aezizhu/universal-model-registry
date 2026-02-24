@@ -108,9 +108,17 @@ func TestKnownModels_CompleteCount(t *testing.T) {
 	for _, ids := range knownModels {
 		total += len(ids)
 	}
-	want := len(models.Models)
+	// Count only non-deprecated models in models.Models.
+	// Deprecated models are intentionally excluded from knownModels
+	// so the updater doesn't flag them as "MISSING" every run.
+	want := 0
+	for _, m := range models.Models {
+		if m.Status != "deprecated" {
+			want++
+		}
+	}
 	if total != want {
-		t.Errorf("knownModels total entries = %d, models.Models has %d entries", total, want)
+		t.Errorf("knownModels total entries = %d, non-deprecated models.Models has %d entries", total, want)
 	}
 }
 
@@ -235,7 +243,7 @@ func TestIsKnownAlias_AliasSuffix(t *testing.T) {
 }
 
 func TestIsKnownAlias_NumericVariant(t *testing.T) {
-	// Heuristic 3: shared base name with ≥4-digit numeric suffixes.
+	// Heuristic 3: shared base name with ≥2-digit numeric suffixes.
 	known := map[string]bool{
 		"codestral-2508":       true,
 		"mistral-large-2512":   true,
@@ -247,11 +255,12 @@ func TestIsKnownAlias_NumericVariant(t *testing.T) {
 	}{
 		{"codestral-2405", true},
 		{"codestral-2501", true},
+		{"codestral-25", true},           // 2-digit suffix still matches base "codestral"
 		{"mistral-large-2407", true},
 		{"magistral-small-2506", true},
-		{"mistral-small-2402", false},  // base "mistral-small" ≠ "mistral-large"
-		{"devstral-2507", false},       // no known model with base "devstral"
-		{"codestral-25", false},        // suffix too short (< 4 digits)
+		{"mistral-small-2402", false},    // base "mistral-small" ≠ "mistral-large"
+		{"devstral-2507", false},         // no known model with base "devstral"
+		{"codestral-2", false},           // 1-digit suffix too short
 	}
 	for _, tt := range cases {
 		got := isKnownAlias(tt.id, known)
@@ -340,10 +349,20 @@ func TestOpenAIExcludePattern(t *testing.T) {
 		}
 	}
 
-	// These should NOT be excluded (regex must not match → kept as current).
-	shouldKeep := []string{
+	// gpt-4o and gpt-4o-mini are now deprecated and should be excluded.
+	shouldAlsoExclude := []string{
 		"gpt-4o",
 		"gpt-4o-mini",
+		"gpt-4o-2024-08-06",
+	}
+	for _, id := range shouldAlsoExclude {
+		if !re.MatchString(id) {
+			t.Errorf("ExcludePattern should match %q (deprecated model), but it did not", id)
+		}
+	}
+
+	// These should NOT be excluded (regex must not match → kept as current).
+	shouldKeep := []string{
 		"gpt-4.1",
 		"gpt-4.1-mini",
 		"gpt-4.1-nano",

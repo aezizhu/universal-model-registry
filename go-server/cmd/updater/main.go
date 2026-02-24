@@ -37,7 +37,7 @@ var docSources = map[string]DocSource{
 			"https://cdn.jsdelivr.net/gh/openai/openai-python@main/src/openai/types/shared/all_models.py",
 		},
 		Pattern:        regexp.MustCompile(`(?:"|')((?:gpt-[0-9][a-z0-9._-]*|o[0-9](?:-[a-z0-9-]+)*))`),
-		ExcludePattern: regexp.MustCompile(`^gpt-(?:3\.|4(?:-|$))|^o1(?:-|$)`),
+		ExcludePattern: regexp.MustCompile(`^gpt-(?:3\.|4o?(?:-|$))|^o1(?:-|$)`),
 	},
 	"Anthropic": {
 		URLs: []string{
@@ -56,14 +56,15 @@ var docSources = map[string]DocSource{
 			"https://docs.mistral.ai/getting-started/models/models_overview/",
 			"https://docs.mistral.ai/getting-started/models/",
 		},
-		Pattern: regexp.MustCompile(`((?:mistral|devstral|codestral|ministral|magistral)-[a-z]*-?[0-9]{2,4}(?:-[0-9]{4})?)`),
+		Pattern:        regexp.MustCompile(`((?:mistral|devstral|codestral|ministral|magistral)(?:-[a-z0-9]+)*-[0-9]{2,4})`),
+		ExcludePattern: regexp.MustCompile(`(?:embed|moderation|ocr|nemo|saba)`),
 	},
 	"xAI": {
 		URLs: []string{
 			"https://docs.x.ai/docs/models",
 		},
 		Pattern:        regexp.MustCompile(`(grok-(?:[0-9]+(?:\.[0-9]+)?(?:-[a-z0-9-]*)?|code-[a-z0-9-]+))`),
-		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)`),
+		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)|^grok-2(?:-|$)`),
 		NormalizeRe:    regexp.MustCompile(`(\d)-(\d)([^0-9]|$)`),
 		NormalizeRepl:  "${1}.${2}${3}",
 	},
@@ -78,91 +79,82 @@ var docSources = map[string]DocSource{
 		URLs: []string{
 			"https://docs.z.ai/guides/overview/pricing",
 		},
-		Pattern:   regexp.MustCompile(`(?i)(GLM-[0-9]+(?:\.[0-9]+)?(?:-[A-Za-z]+)*)`),
-		Lowercase: true,
+		Pattern:        regexp.MustCompile(`(?i)(GLM-[0-9]+(?:\.[0-9]+)?(?:-[A-Za-z]+)*)`),
+		ExcludePattern: regexp.MustCompile(`(?i)^glm-4(?:\.[0-6])?(?:-|$)`),
+		Lowercase:      true,
 	},
 	"MiniMax": {
 		URLs: []string{
 			"https://platform.minimax.io/docs/guides/models-intro",
 			"https://intl.minimaxi.com/",
 		},
-		Pattern:   regexp.MustCompile(`(?i)(MiniMax-M[0-9](?:\.[0-9]+)?(?:-[a-z0-9]+)*)`),
-		Lowercase: true,
+		Pattern:        regexp.MustCompile(`(?i)(MiniMax-M[0-9](?:\.[0-9]+)?(?:-[a-z0-9]+)*)`),
+		ExcludePattern: regexp.MustCompile(`(?i)^minimax-m1(?:-|$)`),
+		Lowercase:      true,
 	},
 }
 
 // knownModels maps provider -> set of model IDs we track in the registry.
 var knownModels = map[string]map[string]bool{
+	// NOTE: Only include current and legacy models here.
+	// Deprecated models are already handled and should NOT be tracked
+	// (otherwise they appear as false "MISSING" every run).
 	"OpenAI": {
-		"gpt-5.2":            true,
-		"gpt-5.2-codex":      true,
-		"gpt-5.2-pro":        true,
-		"gpt-5.1":            true,
-		"gpt-5.1-codex":      true,
-		"gpt-5.1-codex-mini": true,
-		"gpt-5.1-mini":       true,
-		"gpt-5":              true,
-		"gpt-5-mini":         true,
-		"gpt-5-nano":         true,
-		"gpt-4.1-mini":       true,
-		"gpt-4.1-nano":       true,
-		"o3":                 true,
-		"o3-pro":             true,
-		"o3-deep-research":   true,
-		"o4-mini":            true,
-		"o3-mini":            true,
-		"gpt-4.1":            true,
-		"gpt-4o":             true,
-		"gpt-4o-mini":        true,
+		"gpt-5.2":       true,
+		"gpt-5.2-pro":   true,
+		"gpt-5.1":       true,
+		"gpt-5.1-codex": true,
+		"gpt-5.1-mini":  true,
+		"gpt-5":         true,
+		"gpt-5-mini":    true,
+		"gpt-5-nano":    true,
+		"gpt-4.1-mini":  true,
+		"gpt-4.1-nano":  true,
+		"o3":            true,
+		"o4-mini":       true,
+		"o3-mini":       true, // legacy
 	},
 	"Anthropic": {
 		"claude-sonnet-4-6":          true,
 		"claude-opus-4-6":            true,
 		"claude-sonnet-4-5-20250929": true,
 		"claude-haiku-4-5-20251001":  true,
-		"claude-opus-4-5":            true,
-		"claude-opus-4-1":            true,
-		"claude-sonnet-4-0":          true,
-		"claude-3-7-sonnet-20250219": true,
-		"claude-opus-4-0":            true,
+		"claude-opus-4-5":            true, // legacy
+		"claude-opus-4-1":            true, // legacy
+		"claude-sonnet-4-0":          true, // legacy
+		"claude-opus-4-0":            true, // legacy
 	},
 	"Google": {
-		"gemini-3-pro-preview":       true,
-		"gemini-3-pro-image-preview": true,
-		"gemini-3-flash-preview":     true,
-		"gemini-2.5-pro":             true,
-		"gemini-2.5-flash":           true,
-		"gemini-2.5-flash-lite":      true,
-		"gemini-2.0-flash-lite":      true,
-		"gemini-2.0-flash":           true,
+		"gemini-3-pro-preview":   true,
+		"gemini-3-flash-preview": true,
+		"gemini-2.5-pro":         true,
+		"gemini-2.5-flash":       true,
 	},
 	"xAI": {
 		"grok-4":           true,
-		"grok-4.1":         true,
 		"grok-4.1-fast":    true,
 		"grok-4-fast":      true,
 		"grok-code-fast-1": true,
-		"grok-3":           true,
-		"grok-3-mini":      true,
+		"grok-3":           true, // legacy
+		"grok-3-mini":      true, // legacy
 	},
 	"Mistral": {
-		"mistral-large-2512":   true,
-		"mistral-medium-2505":  true,
-		"mistral-small-2506":   true,
-		"ministral-3b-2512":    true,
-		"ministral-8b-2512":    true,
-		"ministral-14b-2512":   true,
-		"magistral-small-2509": true,
+		"mistral-large-2512":    true,
+		"mistral-medium-2505":   true,
+		"mistral-small-2506":    true,
+		"ministral-3b-2512":     true,
+		"ministral-8b-2512":     true,
+		"ministral-14b-2512":    true,
+		"magistral-small-2509":  true,
 		"magistral-medium-2509": true,
-		"devstral-2512":        true,
-		"devstral-small-2512":  true,
-		"codestral-2508":       true,
+		"devstral-2512":         true,
+		"devstral-small-2512":   true,
+		"codestral-2508":        true, // legacy
 	},
 	"DeepSeek": {
 		"deepseek-reasoner": true,
 		"deepseek-chat":     true,
-		"deepseek-r1":       true,
-		"deepseek-v3":       true,
+		"deepseek-r1":       true, // legacy
 	},
 	"Meta": {
 		"llama-4-maverick": true,
@@ -202,7 +194,6 @@ var knownModels = map[string]map[string]bool{
 		"glm-5":          true,
 		"glm-4.7":        true,
 		"glm-4.7-flashx": true,
-		"glm-4.6v":       true,
 	},
 	"NVIDIA": {
 		"nvidia/nemotron-3-nano-30b-a3b":            true,
@@ -220,7 +211,6 @@ var knownModels = map[string]map[string]bool{
 	},
 	"MiniMax": {
 		"minimax-m2.1": true,
-		"minimax-01":   true,
 	},
 	"Xiaomi": {
 		"mimo-v2-flash": true,
@@ -446,9 +436,10 @@ func createGitHubIssue(ctx context.Context, client *http.Client, reportBody stri
 	today := time.Now().Format("2006-01-02")
 	title := "Model Update Detected - " + today
 
-	// Check for existing open issue with the same title to avoid duplicates.
-	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=%s+repo:%s+state:open+label:auto-update",
-		strings.ReplaceAll(title, " ", "+"), repo)
+	// Check for ANY existing open issue with auto-update label to avoid duplicates.
+	// Previous logic only checked today's title, causing daily duplicate issues.
+	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=repo:%s+state:open+label:auto-update",
+		repo)
 	searchReq, err := http.NewRequestWithContext(ctx, http.MethodGet, searchURL, nil)
 	if err != nil {
 		fmt.Printf("[GitHub] failed to create search request: %v\n", err)
@@ -714,6 +705,9 @@ var aliasSuffixes = map[string]bool{
 	"latest": true, "beta": true, "preview": true,
 	"chat-latest": true, "non-reasoning": true, "reasoning": true,
 	"non-reasoning-latest": true, "reasoning-latest": true,
+	"fast": true, "fast-beta": true, "fast-latest": true,
+	"alt": true, "highspeed": true, "lightning": true,
+	"mini-fast": true, "mini-fast-beta": true, "mini-fast-latest": true,
 }
 
 // isAllDigits reports whether s is a non-empty string composed entirely of
@@ -740,23 +734,37 @@ func isAllDigits(s string) bool {
 //     suffixes (e.g. "codestral-2405" when "codestral-2508" is known).
 func isKnownAlias(id string, known map[string]bool) bool {
 	for knownID := range known {
+		// Heuristic 1: known ID extends scraped ID with an all-digit suffix
+		// e.g. known "gpt-5-mini-2025" when scraped ID is "gpt-5-mini"
 		if knownID != id && strings.HasPrefix(knownID, id+"-") {
 			suffix := knownID[len(id)+1:]
 			if isAllDigits(suffix) {
 				return true
 			}
 		}
+		// Heuristic 2: scraped ID extends known ID with a well-known suffix
+		// e.g. "gpt-5-chat-latest" when "gpt-5" is known
 		if id != knownID && strings.HasPrefix(id, knownID+"-") {
 			suffix := id[len(knownID)+1:]
 			if aliasSuffixes[suffix] {
 				return true
 			}
 		}
+		// Heuristic 2b (reverse): known ID extends scraped ID with a well-known suffix
+		// e.g. scraped "gemini-3-flash" when known is "gemini-3-flash-preview"
+		if knownID != id && strings.HasPrefix(knownID, id+"-") {
+			suffix := knownID[len(id)+1:]
+			if aliasSuffixes[suffix] {
+				return true
+			}
+		}
 	}
+	// Heuristic 3: shared base name with numeric suffixes (≥2 digits)
+	// e.g. "codestral-25" matches "codestral-2508"
 	if lastDash := strings.LastIndex(id, "-"); lastDash > 0 {
 		idBase := id[:lastDash]
 		idSuffix := id[lastDash+1:]
-		if isAllDigits(idSuffix) && len(idSuffix) >= 4 {
+		if isAllDigits(idSuffix) && len(idSuffix) >= 2 {
 			if known[idBase] {
 				return true
 			}
