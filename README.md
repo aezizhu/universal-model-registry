@@ -1,12 +1,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev)
-[![Models](https://img.shields.io/badge/Models-94-blueviolet)](https://github.com/aezizhu/universal-model-registry)
+[![Models](https://img.shields.io/badge/Models-97-blueviolet)](https://github.com/aezizhu/universal-model-registry)
 [![Providers](https://img.shields.io/badge/Providers-19-orange)](https://github.com/aezizhu/universal-model-registry)
 [![Tests](https://img.shields.io/badge/Tests-123%20passing-brightgreen)](https://github.com/aezizhu/universal-model-registry)
 
 # Model ID Cheatsheet
 
-**Stop your AI coding agent from hallucinating outdated model names.** This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **94 models across 19 providers**.
+**Stop your AI coding agent from hallucinating outdated model names.** This plugin gives any AI assistant instant access to accurate, up-to-date API model IDs, pricing, and specs for **97 models across 19 providers**.
 
 Built in Go. Single 10MB binary. Zero external calls. Sub-millisecond responses. Auto-updated daily.
 
@@ -114,7 +114,7 @@ Your AI agent gets these 6 tools:
 
 | URI | Description |
 |-----|-------------|
-| `model://registry/all` | Full JSON dump of all 94 models |
+| `model://registry/all` | Full JSON dump of all 97 models |
 | `model://registry/current` | Only current (non-deprecated) models as JSON |
 | `model://registry/pricing` | Pricing table sorted cheapest-first (markdown) |
 
@@ -177,16 +177,16 @@ response = client.chat.completions.create(
 
 ---
 
-## Covered Models (94 total)
+## Covered Models (97 total)
 
-### Current Models (77)
+### Current Models (71)
 
 | Provider | Models | API IDs |
 |----------|--------|---------|
-| **OpenAI** (15) | GPT-5.2, GPT-5.2 Codex, GPT-5.2 Pro, GPT-5.1, GPT-5.1 Codex, GPT-5.1 Codex Mini, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o3 Pro, o3 Deep Research, o4-mini | `gpt-5.2`, `gpt-5.2-codex`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o3-pro`, `o3-deep-research`, `o4-mini` |
-| **Anthropic** (3) | Claude Opus 4.6, Sonnet 4.5, Haiku 4.5 | `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
-| **Google** (6) | Gemini 3 Pro, Gemini 3 Pro Image, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash, 2.5 Flash Lite | `gemini-3-pro-preview`, `gemini-3-pro-image-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
-| **xAI** (5) | Grok 4, Grok 4.1, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
+| **OpenAI** (12) | GPT-5.2, GPT-5.2 Pro, GPT-5.1, GPT-5.1 Codex, GPT-5.1 Mini, GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-4.1 Mini, GPT-4.1 Nano, o3, o4-mini | `gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.1-mini`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-4.1-mini`, `gpt-4.1-nano`, `o3`, `o4-mini` |
+| **Anthropic** (4) | Claude Sonnet 4.6, Claude Opus 4.6, Sonnet 4.5, Haiku 4.5 | `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-sonnet-4-5-20250929`, `claude-haiku-4-5-20251001` |
+| **Google** (4) | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro, 2.5 Flash | `gemini-3-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash` |
+| **xAI** (4) | Grok 4, Grok 4.1 Fast, Grok 4 Fast, Grok Code Fast 1 | `grok-4`, `grok-4.1-fast`, `grok-4-fast`, `grok-code-fast-1` |
 | **Meta** (2) | Llama 4 Maverick, Llama 4 Scout | `llama-4-maverick`, `llama-4-scout` |
 | **Mistral** (10) | Mistral Large 3, Mistral Medium 3, Mistral Small 3.2, Ministral 3B, Ministral 8B, Ministral 14B, Magistral Small 1.2, Magistral Medium 1.2, Devstral 2, Devstral Small 2 | `mistral-large-2512`, `mistral-medium-2505`, `mistral-small-2506`, `ministral-3b-2512`, `ministral-8b-2512`, `ministral-14b-2512`, `magistral-small-2509`, `magistral-medium-2509`, `devstral-2512`, `devstral-small-2512` |
 | **DeepSeek** (2) | DeepSeek Reasoner, DeepSeek Chat | `deepseek-reasoner`, `deepseek-chat` |
@@ -199,21 +199,23 @@ response = client.chat.completions.create(
 | **NVIDIA** (2) | Nemotron 3 Nano 30B, Nemotron Ultra 253B | `nvidia/nemotron-3-nano-30b-a3b`, `nvidia/llama-3.1-nemotron-ultra-253b-v1` |
 | **Tencent** (3) | Hunyuan TurboS, Hunyuan T1, Hunyuan A13B | `hunyuan-turbos`, `hunyuan-t1`, `hunyuan-a13b` |
 | **Microsoft** (3) | Phi-4, Phi-4 Multimodal, Phi-4 Reasoning Plus | `phi-4`, `phi-4-multimodal-instruct`, `phi-4-reasoning-plus` |
-| **MiniMax** (2) | MiniMax M2.1, MiniMax-01 | `minimax-m2.1`, `minimax-01` |
+| **MiniMax** (1) | MiniMax M2.1 | `minimax-m2.1` |
 | **Xiaomi** (1) | MiMo V2 Flash | `mimo-v2-flash` |
 | **Kuaishou** (1) | KAT-Coder Pro | `kat-coder-pro` |
 
-### Legacy & Deprecated Models (17)
+### Legacy & Deprecated Models (26)
 
 Also tracked so your agent can detect outdated model IDs and suggest replacements:
 
-- OpenAI: `o3-mini` (legacy), `gpt-4.1` (legacy), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
+- OpenAI: `o3-mini` (legacy), `gpt-5.2-codex` (deprecated), `gpt-5.1-codex-mini` (deprecated), `o3-pro` (deprecated), `o3-deep-research` (deprecated), `gpt-4.1` (deprecated), `gpt-4o` (deprecated), `gpt-4o-mini` (deprecated)
 - Anthropic: `claude-opus-4-5` (legacy), `claude-opus-4-1` (legacy), `claude-opus-4-0` (legacy), `claude-sonnet-4-0` (legacy), `claude-3-7-sonnet-20250219` (deprecated)
-- Google: `gemini-2.0-flash-lite` (deprecated), `gemini-2.0-flash` (deprecated)
-- xAI: `grok-3` (legacy), `grok-3-mini` (legacy)
+- Google: `gemini-3-pro-image-preview` (deprecated), `gemini-2.5-flash-lite` (deprecated), `gemini-2.0-flash-lite` (deprecated), `gemini-2.0-flash` (deprecated)
+- xAI: `grok-4.1` (deprecated), `grok-3` (legacy), `grok-3-mini` (legacy)
 - Meta: `llama-3.3-70b` (legacy)
 - Mistral: `codestral-2508` (legacy)
 - DeepSeek: `deepseek-r1` (legacy), `deepseek-v3` (deprecated)
+- Zhipu: `glm-4.6v` (deprecated)
+- MiniMax: `minimax-01` (deprecated)
 
 ---
 
