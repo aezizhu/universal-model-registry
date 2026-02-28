@@ -731,7 +731,7 @@ var Models = map[string]Model{
 		PricingOutput:   1.50,
 		KnowledgeCutoff: "2025-11",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "MoE 675B flagship, strong multilingual, Apache 2.0",
 	},
 	"ministral-3b-2512": {
@@ -746,7 +746,7 @@ var Models = map[string]Model{
 		PricingOutput:   0.10,
 		KnowledgeCutoff: "2025-09",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Tiny edge model, 3.4B params + 0.4B vision encoder, open-weight",
 	},
 	"ministral-8b-2512": {
@@ -761,7 +761,7 @@ var Models = map[string]Model{
 		PricingOutput:   0.10,
 		KnowledgeCutoff: "2025-09",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Small edge model, 8.4B params + 0.4B vision encoder, open-weight",
 	},
 	"ministral-14b-2512": {
@@ -776,7 +776,7 @@ var Models = map[string]Model{
 		PricingOutput:   0.10,
 		KnowledgeCutoff: "2025-09",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Mid-size edge model, 13.5B params + 0.4B vision encoder, open-weight",
 	},
 	"magistral-small-2509": {
@@ -791,7 +791,7 @@ var Models = map[string]Model{
 		PricingOutput:   1.50,
 		KnowledgeCutoff: "2025-06",
 		ReleaseDate:     "2025-09",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Reasoning model, 24B params, transparent reasoning chains",
 	},
 	"magistral-medium-2509": {
@@ -806,7 +806,7 @@ var Models = map[string]Model{
 		PricingOutput:   5.00,
 		KnowledgeCutoff: "2025-06",
 		ReleaseDate:     "2025-09",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Advanced reasoning model, deep thinking, transparent reasoning chains",
 	},
 	"mistral-small-2506": {
@@ -821,7 +821,7 @@ var Models = map[string]Model{
 		PricingOutput:   0.30,
 		KnowledgeCutoff: "2025-03",
 		ReleaseDate:     "2025-06",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Fast and cost-efficient, open-weight",
 	},
 	"devstral-2512": {
@@ -836,7 +836,7 @@ var Models = map[string]Model{
 		PricingOutput:   2.00,
 		KnowledgeCutoff: "2025-11",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Specialized coding agent model, open-weight",
 	},
 	"mistral-medium-2505": {
@@ -851,7 +851,7 @@ var Models = map[string]Model{
 		PricingOutput:   2.00,
 		KnowledgeCutoff: "2025-03",
 		ReleaseDate:     "2025-05",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "Mid-tier Mistral model, good vision support, strong multilingual",
 	},
 	"devstral-small-2512": {
@@ -866,7 +866,7 @@ var Models = map[string]Model{
 		PricingOutput:   2.00,
 		KnowledgeCutoff: "2025-11",
 		ReleaseDate:     "2025-12",
-		Status:          "current",
+		Status:          "deprecated",
 		Notes:           "24B coding model, runs on consumer GPUs, Apache 2.0, companion to Devstral 2",
 	},
 	// ─── Mistral: Legacy ───────────────────────────────────────────────
@@ -882,7 +882,7 @@ var Models = map[string]Model{
 		PricingOutput:   0.90,
 		KnowledgeCutoff: "2025-03",
 		ReleaseDate:     "2025-08",
-		Status:          "legacy",
+		Status:          "deprecated",
 		Notes:           "Superseded by Devstral 2",
 	},
 	// ─── DeepSeek: Current ─────────────────────────────────────────────
@@ -928,7 +928,7 @@ var Models = map[string]Model{
 		PricingOutput:   2.19,
 		KnowledgeCutoff: "2025-01",
 		ReleaseDate:     "2025-01",
-		Status:          "legacy",
+		Status:          "deprecated",
 		Notes:           "Open-weight model name, not official API ID. Use deepseek-reasoner for DeepSeek API. Third-party providers may use deepseek-r1",
 	},
 	// ─── DeepSeek: Legacy ──────────────────────────────────────────────
