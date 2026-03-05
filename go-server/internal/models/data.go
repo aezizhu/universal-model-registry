@@ -547,7 +547,7 @@ var Models = map[string]Model{
 		KnowledgeCutoff: "2024-08",
 		ReleaseDate:     "2025-02",
 		Status:          "deprecated",
-		Notes:           "Retiring March 31, 2026. Use Gemini 2.5 Flash Lite instead",
+		Notes:           "Retiring March 31, 2026. Use Gemini 2.5 Flash instead",
 	},
 	"gemini-2.0-flash": {
 		ID:              "gemini-2.0-flash",

@@ -165,7 +165,7 @@ func TestHealthEndpoint(t *testing.T) {
 		t.Errorf("expected status 'ok', got %v", health["status"])
 	}
 	if health["version"] != "1.3.0" {
-		t.Errorf("expected version '1.2.1', got %v", health["version"])
+		t.Errorf("expected version '1.3.0', got %v", health["version"])
 	}
 	if int(health["models"].(float64)) != len(models.Models) {
 		t.Errorf("expected models %d, got %v", len(models.Models), health["models"])
