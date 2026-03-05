@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -100,8 +99,10 @@ var knownModels = map[string]map[string]bool{
 	// Deprecated models are already handled and should NOT be tracked
 	// (otherwise they appear as false "MISSING" every run).
 	"OpenAI": {
-		"gpt-5.2":       true,
-		"gpt-5.2-pro":   true,
+		"gpt-5.3-codex":       true,
+		"gpt-5.3-chat-latest": true,
+		"gpt-5.2":             true,
+		"gpt-5.2-pro":         true,
 		"gpt-5.1":       true,
 		"gpt-5.1-codex": true,
 		"gpt-5.1-mini":  true,
@@ -200,7 +201,7 @@ var knownModels = map[string]map[string]bool{
 		"glm-4.7-flashx": true,
 	},
 	"NVIDIA": {
-		"nvidia/nemotron-3-nano-30b-a3b":            true,
+		"nvidia/nemotron-3-nano-30b-a3b":          true,
 		"nvidia/llama-3.1-nemotron-ultra-253b-v1": true,
 	},
 	"Tencent": {
@@ -209,9 +210,9 @@ var knownModels = map[string]map[string]bool{
 		"hunyuan-a13b":   true,
 	},
 	"Microsoft": {
-		"phi-4":                      true,
-		"phi-4-multimodal-instruct":  true,
-		"phi-4-reasoning-plus":       true,
+		"phi-4":                     true,
+		"phi-4-multimodal-instruct": true,
+		"phi-4-reasoning-plus":      true,
 	},
 	"MiniMax": {
 		"minimax-m2.1": true,
@@ -234,7 +235,7 @@ func main() {
 	hasErrors := false
 	providerOrder := []string{"OpenAI", "Anthropic", "Google", "Mistral", "xAI", "DeepSeek", "Zhipu", "MiniMax"}
 
-	// Capture report output for GitHub issue/PR creation.
+	// Capture report output for GitHub issue creation.
 	var report strings.Builder
 	var allMissing []string
 	var allNew []string
@@ -311,10 +312,10 @@ func main() {
 		}
 		logf("Changes detected. Review the output above.\n")
 		if len(allMissing) > 0 {
-			createDeprecationPR(ctx, client, allMissing, report.String())
+			createDeprecationIssue(ctx, client, allMissing, report.String())
 		}
 		if len(allNew) > 0 {
-			createGitHubIssue(ctx, client, report.String())
+			createNewModelsIssue(ctx, client, allNew, report.String())
 		}
 		os.Exit(1)
 	} else if hasErrors {
@@ -428,54 +429,72 @@ func fetchAndExtract(ctx context.Context, client *http.Client, url string, patte
 	return nil, fmt.Errorf("all %d attempts failed: %w", maxRetries, lastErr)
 }
 
-// createGitHubIssue creates a GitHub issue with the update report.
-// Requires GITHUB_TOKEN and GITHUB_REPO (e.g. "owner/repo") environment variables.
-func createGitHubIssue(ctx context.Context, client *http.Client, reportBody string) {
-	token := os.Getenv("GITHUB_TOKEN")
-	repo := os.Getenv("GITHUB_REPO")
-	if token == "" || repo == "" {
-		return
-	}
-
-	today := time.Now().Format("2006-01-02")
-	title := "Model Update Detected - " + today
-
-	// Check for ANY existing open issue with auto-update label to avoid duplicates.
-	// Previous logic only checked today's title, causing daily duplicate issues.
+// existingIssueCoversModels checks if any open issue with the auto-update label
+// already mentions all of the given model IDs in its body. Returns true if a
+// covering issue exists (meaning we should skip creating a new one).
+func existingIssueCoversModels(ctx context.Context, client *http.Client, token, repo string, modelIDs []string) bool {
 	searchURL := fmt.Sprintf("https://api.github.com/search/issues?q=repo:%s+state:open+label:auto-update",
 		repo)
 	searchReq, err := http.NewRequestWithContext(ctx, http.MethodGet, searchURL, nil)
 	if err != nil {
-		fmt.Printf("[GitHub] failed to create search request: %v\n", err)
-		return
+		return false
 	}
 	searchReq.Header.Set("Authorization", "Bearer "+token)
 	searchReq.Header.Set("Accept", "application/vnd.github+json")
 
 	searchResp, err := client.Do(searchReq)
 	if err != nil {
-		fmt.Printf("[GitHub] failed to search issues: %v\n", err)
-		return
+		return false
 	}
 	defer searchResp.Body.Close()
 
-	if searchResp.StatusCode == http.StatusOK {
-		var searchResult struct {
-			TotalCount int `json:"total_count"`
+	if searchResp.StatusCode != http.StatusOK {
+		return false
+	}
+
+	var searchResult struct {
+		TotalCount int `json:"total_count"`
+		Items      []struct {
+			Body string `json:"body"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(searchResp.Body).Decode(&searchResult); err != nil || searchResult.TotalCount == 0 {
+		return false
+	}
+
+	// Check if any existing issue body already mentions ALL the model IDs.
+	for _, issue := range searchResult.Items {
+		allFound := true
+		for _, id := range modelIDs {
+			if !strings.Contains(issue.Body, id) {
+				allFound = false
+				break
+			}
 		}
-		if err := json.NewDecoder(searchResp.Body).Decode(&searchResult); err == nil && searchResult.TotalCount > 0 {
-			fmt.Printf("[GitHub] Issue already exists for today, skipping.\n")
-			return
+		if allFound {
+			return true
 		}
+	}
+	return false
+}
+
+// createGitHubIssue creates a GitHub issue with the given title, body, and
+// the "auto-update" label. Returns silently if GITHUB_TOKEN or GITHUB_REPO
+// environment variables are not set.
+func createGitHubIssue(ctx context.Context, client *http.Client, title, body string) {
+	token := os.Getenv("GITHUB_TOKEN")
+	repo := os.Getenv("GITHUB_REPO")
+	if token == "" || repo == "" {
+		return
 	}
 
 	issueURL := fmt.Sprintf("https://api.github.com/repos/%s/issues", repo)
-	body := map[string]any{
+	payload := map[string]any{
 		"title":  title,
-		"body":   "```\n" + reportBody + "\n```",
+		"body":   body,
 		"labels": []string{"auto-update"},
 	}
-	bodyJSON, err := json.Marshal(body)
+	bodyJSON, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Printf("[GitHub] failed to marshal issue body: %v\n", err)
 		return
@@ -509,186 +528,85 @@ func createGitHubIssue(ctx context.Context, client *http.Client, reportBody stri
 	}
 }
 
-// createDeprecationPR creates a GitHub PR that changes the status of missing models
-// to "deprecated" in data.go. Uses the GitHub Contents API — no git clone needed.
-func createDeprecationPR(ctx context.Context, client *http.Client, missingIDs []string, reportBody string) {
+// createNewModelsIssue creates a GitHub issue reporting newly detected model IDs.
+// It checks for existing open issues that already cover the same model IDs to
+// avoid duplicates.
+func createNewModelsIssue(ctx context.Context, client *http.Client, newModelIDs []string, reportBody string) {
 	token := os.Getenv("GITHUB_TOKEN")
 	repo := os.Getenv("GITHUB_REPO")
 	if token == "" || repo == "" {
 		return
 	}
 
-	apiBase := "https://api.github.com"
-	filePath := "go-server/internal/models/data.go"
+	if existingIssueCoversModels(ctx, client, token, repo, newModelIDs) {
+		fmt.Printf("[GitHub] Existing open issue already covers these new models, skipping.\n")
+		return
+	}
+
 	today := time.Now().Format("2006-01-02")
-	branchName := "auto-deprecate-" + today
+	title := "New models detected - " + today
 
-	doReq := func(method, url string, body any) (*http.Response, error) {
-		var reader io.Reader
-		if body != nil {
-			b, err := json.Marshal(body)
-			if err != nil {
-				return nil, err
-			}
-			reader = bytes.NewReader(b)
-		}
-		req, err := http.NewRequestWithContext(ctx, method, url, reader)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("Accept", "application/vnd.github+json")
-		if body != nil {
-			req.Header.Set("Content-Type", "application/json")
-		}
-		return client.Do(req)
+	sort.Strings(newModelIDs)
+	var body strings.Builder
+	body.WriteString("## New Models Detected\n\n")
+	body.WriteString("The following model IDs were found in provider documentation but are not in the registry:\n\n")
+	for _, id := range newModelIDs {
+		body.WriteString(fmt.Sprintf("- `%s`\n", id))
 	}
+	body.WriteString("\n### Action Items\n\n")
+	body.WriteString("- [ ] Add each model to `go-server/internal/models/data.go` (all 13 fields)\n")
+	body.WriteString("- [ ] Add model IDs to `knownModels` in `go-server/cmd/updater/main.go`\n")
+	body.WriteString("- [ ] Update `TestTotalModelCount` and `TestProviderCounts` in `data_test.go`\n")
+	body.WriteString("- [ ] Run `go test ./... -v` to verify\n")
+	body.WriteString("\n<details>\n<summary>Full update report</summary>\n\n```\n")
+	body.WriteString(reportBody)
+	body.WriteString("\n```\n</details>\n")
 
-	// Step 1: Get current data.go content and blob SHA.
-	fileURL := fmt.Sprintf("%s/repos/%s/contents/%s", apiBase, repo, filePath)
-	fileResp, err := doReq(http.MethodGet, fileURL, nil)
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to get file: %v\n", err)
-		return
-	}
-	defer fileResp.Body.Close()
-	if fileResp.StatusCode != http.StatusOK {
-		fmt.Printf("[GitHub PR] failed to get file: HTTP %d\n", fileResp.StatusCode)
-		return
-	}
+	createGitHubIssue(ctx, client, title, body.String())
+}
 
-	var fileInfo struct {
-		SHA     string `json:"sha"`
-		Content string `json:"content"`
-	}
-	if err := json.NewDecoder(fileResp.Body).Decode(&fileInfo); err != nil {
-		fmt.Printf("[GitHub PR] failed to decode file info: %v\n", err)
+// createDeprecationIssue creates a GitHub issue reporting models that were
+// removed from provider documentation and may need deprecation. This replaces
+// the old createDeprecationPR approach which was fundamentally broken: it could
+// only update data.go's Status field via regex, but deprecation also requires
+// updating data_test.go counts, knownModels in main.go, and the model's Notes
+// field. Creating an issue lets a human (or CI-aware tool) handle all the
+// required changes properly.
+func createDeprecationIssue(ctx context.Context, client *http.Client, missingIDs []string, reportBody string) {
+	token := os.Getenv("GITHUB_TOKEN")
+	repo := os.Getenv("GITHUB_REPO")
+	if token == "" || repo == "" {
 		return
 	}
 
-	rawContent, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(fileInfo.Content, "\n", ""))
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to decode file content: %v\n", err)
+	if existingIssueCoversModels(ctx, client, token, repo, missingIDs) {
+		fmt.Printf("[GitHub] Existing open issue already covers these missing models, skipping.\n")
 		return
 	}
 
-	// Step 2: Apply deprecation changes.
-	content := string(rawContent)
-	changed := false
-	for _, id := range missingIDs {
-		pattern := fmt.Sprintf(`("%s":\s*\{[^}]*Status:\s*)"(?:current|legacy)"`, regexp.QuoteMeta(id))
-		re := regexp.MustCompile(pattern)
-		if re.MatchString(content) {
-			content = re.ReplaceAllString(content, `${1}"deprecated"`)
-			changed = true
-			fmt.Printf("[GitHub PR] Marking %s as deprecated\n", id)
-		}
-	}
+	today := time.Now().Format("2006-01-02")
+	title := "Models removed from provider docs - " + today
 
-	if !changed {
-		fmt.Printf("[GitHub PR] No status changes needed in data.go\n")
-		return
-	}
-
-	// Step 3: Get main branch SHA.
-	refURL := fmt.Sprintf("%s/repos/%s/git/ref/heads/main", apiBase, repo)
-	refResp, err := doReq(http.MethodGet, refURL, nil)
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to get main ref: %v\n", err)
-		return
-	}
-	var refInfo struct {
-		Object struct {
-			SHA string `json:"sha"`
-		} `json:"object"`
-	}
-	if refResp.StatusCode != http.StatusOK {
-		refResp.Body.Close()
-		fmt.Printf("[GitHub PR] failed to get main ref: HTTP %d\n", refResp.StatusCode)
-		return
-	}
-	err = json.NewDecoder(refResp.Body).Decode(&refInfo)
-	refResp.Body.Close()
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to decode ref info: %v\n", err)
-		return
-	}
-
-	// Step 4: Create new branch.
-	createRefURL := fmt.Sprintf("%s/repos/%s/git/refs", apiBase, repo)
-	branchResp, err := doReq(http.MethodPost, createRefURL, map[string]string{
-		"ref": "refs/heads/" + branchName,
-		"sha": refInfo.Object.SHA,
-	})
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to create branch: %v\n", err)
-		return
-	}
-	if branchResp.StatusCode != http.StatusCreated {
-		errBody, _ := io.ReadAll(io.LimitReader(branchResp.Body, 512))
-		branchResp.Body.Close()
-		fmt.Printf("[GitHub PR] failed to create branch (HTTP %d): %s\n", branchResp.StatusCode, string(errBody))
-		return
-	}
-	branchResp.Body.Close()
-
-	// Step 5: Update file on new branch.
 	sort.Strings(missingIDs)
-	commitMsg := fmt.Sprintf("auto: deprecate %s (removed from provider docs)", strings.Join(missingIDs, ", "))
-	updateResp, err := doReq(http.MethodPut, fileURL, map[string]string{
-		"message": commitMsg,
-		"content": base64.StdEncoding.EncodeToString([]byte(content)),
-		"sha":     fileInfo.SHA,
-		"branch":  branchName,
-	})
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to update file: %v\n", err)
-		return
-	}
-	if updateResp.StatusCode != http.StatusOK && updateResp.StatusCode != http.StatusCreated {
-		errBody, _ := io.ReadAll(io.LimitReader(updateResp.Body, 512))
-		updateResp.Body.Close()
-		fmt.Printf("[GitHub PR] failed to update file (HTTP %d): %s\n", updateResp.StatusCode, string(errBody))
-		return
-	}
-	updateResp.Body.Close()
-
-	// Step 6: Create pull request.
-	prURL := fmt.Sprintf("%s/repos/%s/pulls", apiBase, repo)
-	prBody := "## Auto-Deprecation\n\nModels removed from provider docs:\n"
+	var body strings.Builder
+	body.WriteString("## Models Missing From Provider Documentation\n\n")
+	body.WriteString("The following models are in our registry but were NOT found in their provider's public documentation.\n")
+	body.WriteString("They may have been deprecated, renamed, or the documentation page may have changed.\n\n")
 	for _, id := range missingIDs {
-		prBody += fmt.Sprintf("- `%s`\n", id)
+		body.WriteString(fmt.Sprintf("- `%s`\n", id))
 	}
-	prBody += fmt.Sprintf("\n<details>\n<summary>Full update report</summary>\n\n```\n%s\n```\n</details>", reportBody)
+	body.WriteString("\n### Action Items\n\n")
+	body.WriteString("For each model, verify whether it has actually been deprecated, then:\n\n")
+	body.WriteString("- [ ] Set `Status: \"deprecated\"` in `go-server/internal/models/data.go`\n")
+	body.WriteString("- [ ] Update the `Notes` field with deprecation context\n")
+	body.WriteString("- [ ] Remove the model from `knownModels` in `go-server/cmd/updater/main.go`\n")
+	body.WriteString("- [ ] Update `TestTotalModelCount` and `TestProviderCounts` in `data_test.go`\n")
+	body.WriteString("- [ ] Run `go test ./... -v` to verify\n")
+	body.WriteString("\n<details>\n<summary>Full update report</summary>\n\n```\n")
+	body.WriteString(reportBody)
+	body.WriteString("\n```\n</details>\n")
 
-	prResp, err := doReq(http.MethodPost, prURL, map[string]any{
-		"title": "auto: deprecate models removed from provider docs — " + today,
-		"body":  prBody,
-		"head":  branchName,
-		"base":  "main",
-	})
-	if err != nil {
-		fmt.Printf("[GitHub PR] failed to create PR: %v\n", err)
-		return
-	}
-	defer prResp.Body.Close()
-
-	if prResp.StatusCode == http.StatusCreated {
-		var pr struct {
-			HTMLURL string `json:"html_url"`
-			Number  int    `json:"number"`
-		}
-		_ = json.NewDecoder(prResp.Body).Decode(&pr)
-		fmt.Printf("[GitHub PR] Created: %s\n", pr.HTMLURL)
-		labelURL := fmt.Sprintf("%s/repos/%s/issues/%d/labels", apiBase, repo, pr.Number)
-		labelResp, labelErr := doReq(http.MethodPost, labelURL, []string{"auto-update"})
-		if labelErr == nil {
-			labelResp.Body.Close()
-		}
-	} else {
-		errBody, _ := io.ReadAll(io.LimitReader(prResp.Body, 512))
-		fmt.Printf("[GitHub PR] Failed to create PR (HTTP %d): %s\n", prResp.StatusCode, string(errBody))
-	}
+	createGitHubIssue(ctx, client, title, body.String())
 }
 
 // dateStampRe matches model IDs ending with a date stamp in YYYYMMDD or
