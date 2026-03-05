@@ -730,8 +730,8 @@ func isAllDigits(s string) bool {
 //     (e.g. known "gpt-5-mini-2025" when id is "gpt-5-mini").
 //  2. id extends a known ID with a well-known alias suffix
 //     (e.g. "gpt-5-chat-latest" when "gpt-5" is known).
-//  3. id shares a base name with a known ID and both have ≥4-digit numeric
-//     suffixes (e.g. "codestral-2405" when "codestral-2508" is known).
+//  3. id shares a base name with a known ID and both have ≥2-digit numeric
+//     suffixes (e.g. "codestral-25" or "codestral-2405" when "codestral-2508" is known).
 func isKnownAlias(id string, known map[string]bool) bool {
 	for knownID := range known {
 		// Heuristic 1: known ID extends scraped ID with an all-digit suffix
