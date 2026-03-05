@@ -125,10 +125,11 @@ var knownModels = map[string]map[string]bool{
 		"claude-opus-4-0":            true, // legacy
 	},
 	"Google": {
-		"gemini-3-pro-preview":   true,
-		"gemini-3-flash-preview": true,
-		"gemini-2.5-pro":         true,
-		"gemini-2.5-flash":       true,
+		"gemini-3.1-pro-preview":        true,
+		"gemini-3.1-flash-lite-preview": true,
+		"gemini-3-flash-preview":        true,
+		"gemini-2.5-pro":                true,
+		"gemini-2.5-flash":              true,
 	},
 	"xAI": {
 		"grok-4":           true,

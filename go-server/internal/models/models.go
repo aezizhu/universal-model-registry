@@ -142,6 +142,19 @@ var Aliases = map[string]string{
 	"claude-3-7-sonnet":        "claude-3-7-sonnet-20250219",
 
 	// ─── Google Aliases ────────────────────────────────────────────
+	// Gemini 3.1 series
+	"gemini-3-1-pro-preview":              "gemini-3.1-pro-preview",
+	"gemini31pro":                         "gemini-3.1-pro-preview",
+	"gemini3.1pro":                        "gemini-3.1-pro-preview",
+	"gemini-3.1-pro":                      "gemini-3.1-pro-preview",
+	"google/gemini-3.1-pro-preview":       "gemini-3.1-pro-preview",
+	"models/gemini-3.1-pro-preview":       "gemini-3.1-pro-preview",
+	"gemini-3-1-flash-lite-preview":       "gemini-3.1-flash-lite-preview",
+	"gemini31flashlite":                   "gemini-3.1-flash-lite-preview",
+	"gemini3.1flashlite":                  "gemini-3.1-flash-lite-preview",
+	"gemini-3.1-flash-lite":               "gemini-3.1-flash-lite-preview",
+	"google/gemini-3.1-flash-lite-preview": "gemini-3.1-flash-lite-preview",
+
 	// Gemini 3 series
 	"gemini-3-pro":                  "gemini-3-pro-preview",
 	"gemini3pro":                    "gemini-3-pro-preview",

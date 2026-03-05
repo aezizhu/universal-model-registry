@@ -2,6 +2,7 @@ package tools
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -34,10 +35,15 @@ func CheckModelStatus(modelID string) string {
 				replacements = append(replacements, r)
 			}
 		}
-		// Sort by newest release date first, then by ID for determinism
+		// Sort by newest release date first, then closest price, then ID for determinism
 		sort.SliceStable(replacements, func(i, j int) bool {
 			if replacements[i].ReleaseDate != replacements[j].ReleaseDate {
 				return replacements[i].ReleaseDate > replacements[j].ReleaseDate
+			}
+			di := math.Abs(replacements[i].PricingInput - m.PricingInput)
+			dj := math.Abs(replacements[j].PricingInput - m.PricingInput)
+			if di != dj {
+				return di < dj
 			}
 			return replacements[i].ID < replacements[j].ID
 		})

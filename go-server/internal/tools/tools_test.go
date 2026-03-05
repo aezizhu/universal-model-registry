@@ -173,26 +173,43 @@ func TestCheckModelStatus_Deprecated(t *testing.T) {
 	}
 }
 
-func TestCheckModelStatus_RecommendsNewest(t *testing.T) {
-	// gpt-4o is deprecated; replacement should be the newest OpenAI model,
-	// NOT the closest-priced one.
+func TestCheckModelStatus_RecommendsNewestClosestPrice(t *testing.T) {
+	// gpt-4o is deprecated; replacement should be the newest OpenAI model
+	// with the closest price (newest date first, then closest input price).
 	result := CheckModelStatus("gpt-4o")
 
-	// Find the actual newest current OpenAI model
-	var newestID, newestDate string
+	deprecated := models.Models["gpt-4o"]
+
+	// Find the newest release date among current OpenAI models
+	var newestDate string
 	for _, m := range models.Models {
 		if m.Provider == "OpenAI" && m.Status == "current" {
-			if m.ReleaseDate > newestDate || (m.ReleaseDate == newestDate && m.ID < newestID) {
+			if m.ReleaseDate > newestDate {
 				newestDate = m.ReleaseDate
-				newestID = m.ID
 			}
 		}
 	}
-	if newestID == "" {
+	if newestDate == "" {
 		t.Fatal("no current OpenAI models found")
 	}
-	if !strings.Contains(result, newestID) {
-		t.Errorf("expected newest OpenAI model %q in replacement, got: %s", newestID, result)
+
+	// Among models with that newest date, find the one closest in input price
+	var bestID string
+	bestDiff := -1.0
+	for _, m := range models.Models {
+		if m.Provider == "OpenAI" && m.Status == "current" && m.ReleaseDate == newestDate {
+			diff := m.PricingInput - deprecated.PricingInput
+			if diff < 0 {
+				diff = -diff
+			}
+			if bestDiff < 0 || diff < bestDiff || (diff == bestDiff && m.ID < bestID) {
+				bestDiff = diff
+				bestID = m.ID
+			}
+		}
+	}
+	if !strings.Contains(result, bestID) {
+		t.Errorf("expected newest+closest-priced OpenAI model %q in replacement, got: %s", bestID, result)
 	}
 }
 
