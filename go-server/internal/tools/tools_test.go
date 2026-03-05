@@ -173,6 +173,29 @@ func TestCheckModelStatus_Deprecated(t *testing.T) {
 	}
 }
 
+func TestCheckModelStatus_RecommendsNewest(t *testing.T) {
+	// gpt-4o is deprecated; replacement should be the newest OpenAI model,
+	// NOT the closest-priced one.
+	result := CheckModelStatus("gpt-4o")
+
+	// Find the actual newest current OpenAI model
+	var newestID, newestDate string
+	for _, m := range models.Models {
+		if m.Provider == "OpenAI" && m.Status == "current" {
+			if m.ReleaseDate > newestDate || (m.ReleaseDate == newestDate && m.ID < newestID) {
+				newestDate = m.ReleaseDate
+				newestID = m.ID
+			}
+		}
+	}
+	if newestID == "" {
+		t.Fatal("no current OpenAI models found")
+	}
+	if !strings.Contains(result, newestID) {
+		t.Errorf("expected newest OpenAI model %q in replacement, got: %s", newestID, result)
+	}
+}
+
 func TestCheckModelStatus_NotFound(t *testing.T) {
 	result := CheckModelStatus("fake-model")
 	if !strings.Contains(strings.ToLower(result), "not found") {

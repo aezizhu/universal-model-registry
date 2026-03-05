@@ -2,7 +2,6 @@ package tools
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 
@@ -35,19 +34,17 @@ func CheckModelStatus(modelID string) string {
 				replacements = append(replacements, r)
 			}
 		}
-		// Sort by closest pricing to the original model, then by ID for determinism
+		// Sort by newest release date first, then by ID for determinism
 		sort.SliceStable(replacements, func(i, j int) bool {
-			di := math.Abs(replacements[i].PricingInput - m.PricingInput)
-			dj := math.Abs(replacements[j].PricingInput - m.PricingInput)
-			if di != dj {
-				return di < dj
+			if replacements[i].ReleaseDate != replacements[j].ReleaseDate {
+				return replacements[i].ReleaseDate > replacements[j].ReleaseDate
 			}
 			return replacements[i].ID < replacements[j].ID
 		})
 		if len(replacements) > 0 {
 			r := replacements[0]
-			result += fmt.Sprintf("\n\nRecommended replacement: **%s** (`%s`)",
-				r.DisplayName, r.ID)
+			result += fmt.Sprintf("\n\nRecommended replacement: **%s** (`%s`) — newest from %s",
+				r.DisplayName, r.ID, r.Provider)
 		}
 	}
 
