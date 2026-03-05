@@ -56,7 +56,7 @@ var docSources = map[string]DocSource{
 			"https://docs.mistral.ai/getting-started/models/",
 		},
 		Pattern:        regexp.MustCompile(`((?:mistral|devstral|codestral|ministral|magistral)(?:-[a-z0-9]+)*-[0-9]{2,4})`),
-		ExcludePattern: regexp.MustCompile(`(?:embed|moderation|ocr|nemo|saba)`),
+		ExcludePattern: regexp.MustCompile(`(?:embed|moderation|ocr|nemo)`),
 	},
 	"xAI": {
 		URLs: []string{
@@ -341,7 +341,7 @@ func fetchModelsFromDocs(ctx context.Context, client *http.Client, src DocSource
 		}
 		if len(ids) > 0 {
 			if src.ExcludePattern != nil {
-				filtered := ids[:0]
+				filtered := make([]string, 0, len(ids))
 				for _, id := range ids {
 					if !src.ExcludePattern.MatchString(id) {
 						filtered = append(filtered, id)
@@ -466,10 +466,16 @@ func existingIssueCoversModels(ctx context.Context, client *http.Client, token, 
 	}
 
 	// Check if any existing issue body already mentions ALL the model IDs.
+	// Use word-boundary matching to avoid substring false positives
+	// (e.g., "gpt-5" matching inside "gpt-5-mini").
 	for _, issue := range searchResult.Items {
 		allFound := true
 		for _, id := range modelIDs {
-			if !strings.Contains(issue.Body, id) {
+			// Match the model ID as a whole token: preceded by start/non-alnum,
+			// followed by end/non-alnum. This prevents "gpt-5" matching "gpt-5-mini".
+			pat := `(?:^|[^a-zA-Z0-9_-])` + regexp.QuoteMeta(id) + `(?:$|[^a-zA-Z0-9_.-])`
+			matched, _ := regexp.MatchString(pat, issue.Body)
+			if !matched {
 				allFound = false
 				break
 			}
