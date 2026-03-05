@@ -25,6 +25,17 @@ type Model struct {
 // Aliases maps common shorthand model IDs to their canonical registry key.
 var Aliases = map[string]string{
 	// ─── OpenAI Aliases ────────────────────────────────────────────
+	// GPT-5.3 series
+	"gpt53codex":         "gpt-5.3-codex",
+	"gpt-5-3-codex":      "gpt-5.3-codex",
+	"gpt5.3codex":        "gpt-5.3-codex",
+	"gpt-5.3-instant":    "gpt-5.3-chat-latest",
+	"gpt53instant":       "gpt-5.3-chat-latest",
+	"gpt-5-3-chat-latest": "gpt-5.3-chat-latest",
+	"gpt53":              "gpt-5.3-chat-latest",
+	"gpt5.3":             "gpt-5.3-chat-latest",
+	"gpt-5-3":            "gpt-5.3-chat-latest",
+
 	// GPT-5.2 series
 	"gpt52":         "gpt-5.2",
 	"gpt5.2":        "gpt-5.2",

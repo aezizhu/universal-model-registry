@@ -4,6 +4,36 @@ package models
 // Data verified against official docs as of February 2026.
 var Models = map[string]Model{
 	// ─── OpenAI: Current ───────────────────────────────────────────────
+	"gpt-5.3-codex": {
+		ID:              "gpt-5.3-codex",
+		DisplayName:     "GPT-5.3 Codex",
+		Provider:        "OpenAI",
+		ContextWindow:   400_000,
+		MaxOutputTokens: 128_000,
+		Vision:          true,
+		Reasoning:       true,
+		PricingInput:    1.75,
+		PricingOutput:   14.00,
+		KnowledgeCutoff: "2025-08",
+		ReleaseDate:     "2026-02",
+		Status:          "current",
+		Notes:           "Most capable agentic coding model, 25% faster than 5.2-Codex, high cybersecurity capability",
+	},
+	"gpt-5.3-chat-latest": {
+		ID:              "gpt-5.3-chat-latest",
+		DisplayName:     "GPT-5.3 Instant",
+		Provider:        "OpenAI",
+		ContextWindow:   400_000,
+		MaxOutputTokens: 16_384,
+		Vision:          true,
+		Reasoning:       false,
+		PricingInput:    1.75,
+		PricingOutput:   14.00,
+		KnowledgeCutoff: "2025-08",
+		ReleaseDate:     "2026-03",
+		Status:          "current",
+		Notes:           "Default ChatGPT model, 26.8% fewer hallucinations, replaces GPT-5.2 Instant",
+	},
 	"gpt-5.2": {
 		ID:              "gpt-5.2",
 		DisplayName:     "GPT-5.2",
