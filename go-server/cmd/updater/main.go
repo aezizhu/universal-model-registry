@@ -212,10 +212,13 @@ var knownModels = map[string]map[string]bool{
 	"Microsoft": {
 		"phi-4":                     true,
 		"phi-4-multimodal-instruct": true,
+		"phi-4-reasoning":           true,
 		"phi-4-reasoning-plus":      true,
 	},
 	"MiniMax": {
-		"minimax-m2.1": true,
+		"minimax-m2.5":           true,
+		"minimax-m2.5-lightning": true,
+		"minimax-m2.1":           true, // legacy
 	},
 	"Xiaomi": {
 		"mimo-v2-flash": true,
