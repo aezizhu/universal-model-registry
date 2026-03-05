@@ -4,14 +4,14 @@
     "name": "aezizhu"
   },
   "metadata": {
-    "description": "Accurate API model IDs, pricing, and specs for 94 AI models across 19 providers. Prevents your coding agent from using outdated or hallucinated model names.",
+    "description": "Accurate API model IDs, pricing, and specs for 97 AI models across 19 providers. Prevents your coding agent from using outdated or hallucinated model names.",
     "version": "1.3.0"
   },
   "plugins": [
     {
       "name": "model-id-cheatsheet",
       "source": "./",
-      "description": "Gives Claude instant access to accurate API model IDs, pricing, and specs for 94 models across 19 providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral, DeepSeek, Amazon, Cohere, Perplexity, AI21, Moonshot, Zhipu, NVIDIA, Tencent, Microsoft, MiniMax, Xiaomi, Kuaishou). Auto-updated daily.",
+      "description": "Gives Claude instant access to accurate API model IDs, pricing, and specs for 97 models across 19 providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral, DeepSeek, Amazon, Cohere, Perplexity, AI21, Moonshot, Zhipu, NVIDIA, Tencent, Microsoft, MiniMax, Xiaomi, Kuaishou). Auto-updated daily.",
       "version": "1.3.0",
       "keywords": ["ai-models", "model-ids", "pricing", "mcp", "openai", "anthropic", "gemini", "claude", "gpt"],
       "category": "ai-development"
