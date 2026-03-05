@@ -509,7 +509,7 @@ func TestDocSources_XAIHasNormalizeRe(t *testing.T) {
 func TestXAIPatternAndNormalize_EndToEnd(t *testing.T) {
 	src := docSources["xAI"]
 	// Simulate HTML snippets containing model IDs in various forms.
-	content := `"grok-4-1-fast" and "grok-4-0709" and "grok-3-mini"`
+	content := `"grok-4-1-fast" and "grok-4-0709" and "grok-3-mini" and "grok-code-prompt-engineering"`
 
 	matches := src.Pattern.FindAllStringSubmatch(content, -1)
 	var ids []string
@@ -568,6 +568,31 @@ func TestXAIExcludePattern(t *testing.T) {
 	for _, id := range shouldKeep {
 		if re.MatchString(id) {
 			t.Errorf("xAI ExcludePattern should NOT match %q, but it did", id)
+		}
+	}
+}
+
+func TestXAIPattern_DocsPagePaths(t *testing.T) {
+	re := docSources["xAI"].Pattern
+	// "grok-code-prompt-engineering" is a docs page URL path, not a model ID.
+	// The pattern should NOT match it.
+	shouldNotMatch := []string{
+		"grok-code-prompt-engineering",
+		"grok-code-best-practices",
+	}
+	for _, s := range shouldNotMatch {
+		if m := re.FindString(s); m == s {
+			t.Errorf("xAI Pattern should NOT fully match docs page path %q, but it did", s)
+		}
+	}
+	// Real model IDs should still match.
+	shouldMatch := []string{
+		"grok-code-fast-1",
+		"grok-code-turbo-1",
+	}
+	for _, s := range shouldMatch {
+		if m := re.FindString(s); m != s {
+			t.Errorf("xAI Pattern should match model ID %q, got %q", s, m)
 		}
 	}
 }

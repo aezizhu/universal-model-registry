@@ -98,7 +98,7 @@ var docSources = map[string]DocSource{
 		URLs: []string{
 			"https://docs.x.ai/docs/models",
 		},
-		Pattern:        regexp.MustCompile(`(grok-(?:[0-9]+(?:\.[0-9]+)?(?:-[a-z0-9-]*)?|code-[a-z0-9-]+))`),
+		Pattern:        regexp.MustCompile(`(grok-(?:[0-9]+(?:\.[0-9]+)?(?:-[a-z0-9-]*)?|code-(?:fast|turbo|chat)-[a-z0-9-]+))`),
 		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)|^grok-2(?:-|$)`),
 		NormalizeRe:    regexp.MustCompile(`(\d)-(\d)([^0-9]|$)`),
 		NormalizeRepl:  "${1}.${2}${3}",
