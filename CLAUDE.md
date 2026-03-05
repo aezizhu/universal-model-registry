@@ -1,6 +1,6 @@
 # Model ID Cheatsheet
 
-MCP server exposing a curated, static registry of 97 AI models across 19 providers. Built in Go with the official MCP SDK.
+MCP server exposing a curated, static registry of 107 AI models across 19 providers. Built in Go with the official MCP SDK.
 
 ## Architecture
 
