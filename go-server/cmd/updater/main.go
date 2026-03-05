@@ -143,7 +143,7 @@ var knownModels = map[string]map[string]bool{
 	"Mistral": {
 		"mistral-large-2512":    true,
 		"mistral-medium-2505":   true,
-		"mistral-small-2503":    true,
+		"mistral-small-2503":    true, // legacy
 		"mistral-small-2506":    true,
 		"mistral-saba-2502":     true,
 		"ministral-3b-2512":     true,
