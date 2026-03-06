@@ -135,7 +135,7 @@ var knownModels = map[string]map[string]bool{
 	// Deprecated models are already handled and should NOT be tracked
 	// (otherwise they appear as false "MISSING" every run).
 	"OpenAI": {
-		"gpt-5.3-codex":       true,
+		"gpt-5.4":             true,
 		"gpt-5.3-chat-latest": true,
 		"gpt-5.2":             true,
 		"gpt-5.2-pro":         true,
@@ -162,14 +162,15 @@ var knownModels = map[string]map[string]bool{
 		"claude-opus-4-0":            true, // legacy
 	},
 	"Google": {
-		"gemini-3.1-pro-preview":        true,
-		"gemini-3.1-flash-lite-preview": true,
-		"gemini-3-flash-preview":        true,
-		"gemini-2.5-pro":                true,
-		"gemini-2.5-flash":              true,
+		"gemini-3.1-pro-preview": true,
+		"gemini-3.1-flash":       true,
+		"gemini-3-flash-preview": true,
+		"gemini-2.5-pro":         true,
+		"gemini-2.5-flash":       true,
 	},
 	"xAI": {
 		"grok-4":           true,
+		"grok-4.1-alt":     true,
 		"grok-4.1-fast":    true,
 		"grok-4-fast":      true,
 		"grok-code-fast-1": true,
@@ -177,24 +178,25 @@ var knownModels = map[string]map[string]bool{
 		"grok-3-mini":      true, // legacy
 	},
 	"Mistral": {
-		"mistral-large-2512":    true,
-		"mistral-medium-2505":   true,
-		"mistral-small-2503":    true, // legacy
-		"mistral-small-2506":    true,
-		"mistral-saba-2502":     true,
-		"ministral-3b-2512":     true,
-		"ministral-8b-2512":     true,
-		"ministral-14b-2512":    true,
-		"magistral-small-2509":  true,
-		"magistral-medium-2509": true,
-		"devstral-2512":         true,
-		"devstral-small-2512":   true,
-		"codestral-2508":        true, // legacy
+		"mistral-large-2512":          true,
+		"mistral-medium-2505":         true,
+		"mistral-small-2503":          true, // legacy
+		"mistral-small-2506":          true,
+		"mistral-small-creative-2512": true,
+		"mistral-saba-2502":           true,
+		"ministral-3b-2512":           true,
+		"ministral-8b-2512":           true,
+		"ministral-14b-2512":          true,
+		"magistral-small-2509":        true,
+		"magistral-medium-2509":       true,
+		"devstral-medium-2507":        true,
+		"devstral-2512":               true,
+		"devstral-small-2512":         true,
+		"codestral-2508":              true, // legacy
 	},
 	"DeepSeek": {
 		"deepseek-reasoner": true,
 		"deepseek-chat":     true,
-		"deepseek-r1":       true, // legacy
 	},
 	"Meta": {
 		"llama-4-maverick": true,
@@ -233,7 +235,9 @@ var knownModels = map[string]map[string]bool{
 	},
 	"Zhipu": {
 		"glm-5":          true,
+		"glm-5-code":     true,
 		"glm-4.7":        true,
+		"glm-4.7-flash":  true,
 		"glm-4.7-flashx": true,
 	},
 	"NVIDIA": {
@@ -252,9 +256,10 @@ var knownModels = map[string]map[string]bool{
 		"phi-4-reasoning-plus":      true,
 	},
 	"MiniMax": {
-		"minimax-m2.5":           true,
-		"minimax-m2.5-lightning": true,
-		"minimax-m2.1":           true, // legacy
+		"minimax-m2.5":     true,
+		"minimax-m2":       true,
+		"minimax-m2-her-2": true,
+		"minimax-m2.1":     true, // legacy
 	},
 	"Xiaomi": {
 		"mimo-v2-flash": true,

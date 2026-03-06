@@ -25,6 +25,11 @@ type Model struct {
 // Aliases maps common shorthand model IDs to their canonical registry key.
 var Aliases = map[string]string{
 	// ─── OpenAI Aliases ────────────────────────────────────────────
+	// GPT-5.4
+	"gpt54":    "gpt-5.4",
+	"gpt5.4":   "gpt-5.4",
+	"gpt-5-4":  "gpt-5.4",
+
 	// GPT-5.3 series
 	"gpt53codex":         "gpt-5.3-codex",
 	"gpt-5-3-codex":      "gpt-5.3-codex",
@@ -154,6 +159,10 @@ var Aliases = map[string]string{
 
 	// ─── Google Aliases ────────────────────────────────────────────
 	// Gemini 3.1 series
+	"gemini-3-1-flash":                    "gemini-3.1-flash",
+	"gemini31flash":                       "gemini-3.1-flash",
+	"gemini3.1flash":                      "gemini-3.1-flash",
+	"google/gemini-3.1-flash":             "gemini-3.1-flash",
 	"gemini-3-1-pro-preview":              "gemini-3.1-pro-preview",
 	"gemini31pro":                         "gemini-3.1-pro-preview",
 	"gemini3.1pro":                        "gemini-3.1-pro-preview",
@@ -205,6 +214,9 @@ var Aliases = map[string]string{
 
 	// ─── xAI Aliases ───────────────────────────────────────────────
 	"grok4":          "grok-4",
+	"grok41alt":      "grok-4.1-alt",
+	"grok4.1alt":     "grok-4.1-alt",
+	"grok-4-1-alt":   "grok-4.1-alt",
 	"grok41":         "grok-4.1",
 	"grok4.1":        "grok-4.1",
 	"grok-4-1":       "grok-4.1",
@@ -245,6 +257,9 @@ var Aliases = map[string]string{
 	"mistral-small-3.2":    "mistral-small-2506",
 	"mistral-saba":         "mistral-saba-2502",
 	"saba":                 "mistral-saba-2502",
+	"devstral-medium":      "devstral-medium-2507",
+	"devstral-medium-1":    "devstral-medium-2507",
+	"mistral-small-creative": "mistral-small-creative-2512",
 	"devstral":             "devstral-2512",
 	"devstral-2":           "devstral-2512",
 	"mistral-medium":       "mistral-medium-2505",
@@ -335,6 +350,13 @@ var Aliases = map[string]string{
 	"zhipu-glm-4.7":            "glm-4.7",
 	"chatglm-4.7":              "glm-4.7",
 	"zhipu/glm-4.7":            "glm-4.7",
+	"glm-4-7-flash":            "glm-4.7-flash",
+	"glm47flash":               "glm-4.7-flash",
+	"glm4.7flash":              "glm-4.7-flash",
+	"zhipu/glm-4.7-flash":      "glm-4.7-flash",
+	"glm-5-code":               "glm-5-code",
+	"glm5code":                 "glm-5-code",
+	"zhipu/glm-5-code":         "glm-5-code",
 	"glm-flashx":               "glm-4.7-flashx",
 	"glm-flash":                "glm-4.7-flashx",
 	"glm-4-7-flashx":           "glm-4.7-flashx",
@@ -405,11 +427,15 @@ var Aliases = map[string]string{
 	"minimax-m25-lightning":  "minimax-m2.5-lightning",
 	"MiniMax-M2.5-Lightning": "minimax-m2.5-lightning",
 	"minimax-lightning":      "minimax-m2.5-lightning",
+	"minimaxm2":              "minimax-m2",
+	"MiniMax-M2":             "minimax-m2",
+	"minimax-m2-her":         "minimax-m2-her-2",
+	"MiniMax-M2-Her-2":       "minimax-m2-her-2",
+	"minimax-her":            "minimax-m2-her-2",
 	"minimax-m2-1":           "minimax-m2.1",
 	"minimax-m21":            "minimax-m2.1",
 	"minimaxm2.1":            "minimax-m2.1",
 	"MiniMax-M2.1":           "minimax-m2.1",
-	"minimax-m2":             "minimax-m2.1",
 	"minimax-0-1":            "minimax-01",
 	"MiniMax-01":             "minimax-01",
 	"minimax-vl-01":          "minimax-01",
