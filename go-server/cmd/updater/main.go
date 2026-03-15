@@ -175,6 +175,15 @@ var docSources = map[string]DocSource{
 		ExcludePattern: regexp.MustCompile(`(?i)(?:image|vision|imagine|video)|^grok-2(?:-|$)`),
 		NormalizeRe:    regexp.MustCompile(`(\d)-(\d)([^0-9]|$)`),
 		NormalizeRepl:  "${1}.${2}${3}",
+		NormalizeFunc: func(id string) string {
+			// Strip reasoning mode suffixes — these are modes, not distinct models
+			for _, suffix := range []string{"-latest-non-reasoning", "-latest-reasoning", "-non-reasoning", "-reasoning"} {
+				if strings.HasSuffix(id, suffix) {
+					return strings.TrimSuffix(id, suffix)
+				}
+			}
+			return id
+		},
 	},
 	"DeepSeek": {
 		URLs: []string{
@@ -244,13 +253,15 @@ var knownModels = map[string]map[string]bool{
 		"gemini-2.0-flash":       true,
 	},
 	"xAI": {
-		"grok-4":           true,
-		"grok-4.1-alt":     true,
-		"grok-4.1-fast":    true,
-		"grok-4-fast":      true,
-		"grok-code-fast-1": true,
-		"grok-3":           true, // legacy
-		"grok-3-mini":      true, // legacy
+		"grok-4":                          true,
+		"grok-4.1-alt":                    true,
+		"grok-4.1-fast":                   true,
+		"grok-4-fast":                     true,
+		"grok-code-fast-1":                true,
+		"grok-4.20-beta-0309":             true,
+		"grok-4.20-multi-agent-beta-0309": true,
+		"grok-3":                          true, // legacy
+		"grok-3-mini":                     true, // legacy
 	},
 	"Mistral": {
 		"mistral-large-2512":          true,
