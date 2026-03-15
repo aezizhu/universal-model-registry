@@ -877,6 +877,20 @@ var aliasSuffixes = map[string]bool{
 	"mini-fast": true, "mini-fast-beta": true, "mini-fast-latest": true,
 }
 
+// sortedAliasSuffixes is aliasSuffixes sorted by length descending for
+// deterministic greedy matching in isCompoundAliasSuffix.
+var sortedAliasSuffixes []string
+
+func init() {
+	sortedAliasSuffixes = make([]string, 0, len(aliasSuffixes))
+	for s := range aliasSuffixes {
+		sortedAliasSuffixes = append(sortedAliasSuffixes, s)
+	}
+	sort.Slice(sortedAliasSuffixes, func(i, j int) bool {
+		return len(sortedAliasSuffixes[i]) > len(sortedAliasSuffixes[j])
+	})
+}
+
 // isCompoundAliasSuffix reports whether suffix is composed entirely of
 // well-known alias parts joined by dashes (e.g. "latest-non-reasoning").
 // This handles multi-part suffixes without requiring every combination
@@ -885,13 +899,12 @@ func isCompoundAliasSuffix(suffix string) bool {
 	if suffix == "" {
 		return false
 	}
-	// Try to consume the suffix by greedily matching alias parts from the front.
-	// We try longer matches first to handle cases like "non-reasoning" before "non".
+	// Consume the suffix by greedily matching alias parts from the front,
+	// longest first to handle cases like "non-reasoning" before "non".
 	remaining := suffix
 	for remaining != "" {
 		matched := false
-		// Sort candidates by length (descending) for greedy match
-		for candidate := range aliasSuffixes {
+		for _, candidate := range sortedAliasSuffixes {
 			if strings.HasPrefix(remaining, candidate) {
 				rest := remaining[len(candidate):]
 				if rest == "" || strings.HasPrefix(rest, "-") {
@@ -982,7 +995,16 @@ func isKnownAlias(id string, known map[string]bool) bool {
 // hasVariantInDocs checks whether any doc ID is a variant of the given known
 // model ID. This prevents false "missing" alerts when docs list a model only
 // via suffixed variants (e.g. "model-reasoning" instead of bare "model").
+// It also handles the reverse case where the known ID itself ends with a mode
+// suffix (e.g. "gpt-5.3-chat-latest") and docs contain the stripped version
+// ("gpt-5.3-chat") after universal suffix stripping.
 func hasVariantInDocs(knownID string, docSet map[string]bool) bool {
+	// Reverse check: if stripping mode suffixes from the known ID yields
+	// a doc entry, the model is accounted for (docs just omit the suffix).
+	if stripped := stripModeSuffixes(knownID); stripped != knownID && docSet[stripped] {
+		return true
+	}
+	// Forward check: any doc ID extends knownID with an alias suffix.
 	prefix := knownID + "-"
 	for docID := range docSet {
 		if strings.HasPrefix(docID, prefix) {

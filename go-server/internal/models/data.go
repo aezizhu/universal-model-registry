@@ -775,7 +775,7 @@ var Models = map[string]Model{
 		Status:          "current",
 		Notes:           "Grok 4.20 beta, reasoning and non-reasoning modes, 2M context",
 	},
-"grok-4.20-multi-agent-beta-0309": {
+	"grok-4.20-multi-agent-beta-0309": {
 		ID:              "grok-4.20-multi-agent-beta-0309",
 		DisplayName:     "Grok 4.20 Multi-Agent Beta 0309",
 		Provider:        "xAI",

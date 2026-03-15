@@ -560,14 +560,17 @@ func TestHasVariantInDocs(t *testing.T) {
 		"grok-4-fast-non-reasoning": true,
 		"grok-4.20-beta-0309":       true,
 		"gpt-5":                     true,
+		"gpt-5.3-chat":              true, // stripped from gpt-5.3-chat-latest
 	}
 
 	tests := []struct {
 		knownID string
 		want    bool
 	}{
-		// grok-4-fast has variants in docs
+		// grok-4-fast has variants in docs (forward check)
 		{"grok-4-fast", true},
+		// gpt-5.3-chat-latest: stripping -latest yields gpt-5.3-chat which is in docs (reverse check)
+		{"gpt-5.3-chat-latest", true},
 		// gpt-5 is directly in docs, but hasVariantInDocs checks for suffixed variants
 		{"gpt-5", false},
 		// No variant for this
@@ -579,6 +582,21 @@ func TestHasVariantInDocs(t *testing.T) {
 		got := hasVariantInDocs(tt.knownID, docSet)
 		if got != tt.want {
 			t.Errorf("hasVariantInDocs(%q) = %v, want %v", tt.knownID, got, tt.want)
+		}
+	}
+}
+
+func TestDiff_KnownModelEndingWithLatestNotFlaggedMissing(t *testing.T) {
+	// gpt-5.3-chat-latest is a canonical known model ID ending in -latest.
+	// After universal stripModeSuffixes, docs will contain "gpt-5.3-chat".
+	// The known model must NOT be flagged as missing.
+	known := map[string]bool{"gpt-5.3-chat-latest": true}
+	docIDs := []string{"gpt-5.3-chat"} // stripped by universal suffix stripping
+
+	_, missing := diff(known, docIDs)
+	for _, m := range missing {
+		if m == "gpt-5.3-chat-latest" {
+			t.Error("gpt-5.3-chat-latest should NOT be flagged as missing when docs contain gpt-5.3-chat (stripped form)")
 		}
 	}
 }
